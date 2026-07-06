@@ -1,7 +1,7 @@
 # PROGRESS — Polymarket BTC Up/Down Strategy Discovery
 
 **Current phase:** 0 (Data acquisition & integrity)
-**Current step:** GATE-0-disk — awaiting user confirmation to launch bulk download (0.4)
+**Current step:** 0.4 bulk download RUNNING (user confirmed). Watchdog self-wakeups re-kick jobs after container restarts and chain post-bulk steps (fee fit → windows → split_holdout → GATE 0 → Phase 1). Phase 1 numeric machinery already built+tested: src/phase1_microstructure.py (sections 1,3,4,5,6) and src/phase1_leadlag.py (section 2).
 **Last updated:** 2026-07-06 (session 1)
 
 If the user says "continue" / "go ahead": launch bulk immediately:
