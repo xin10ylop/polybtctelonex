@@ -1,0 +1,8 @@
+.env
+data/
+logs/
+results/raw_grids/
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
