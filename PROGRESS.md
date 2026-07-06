@@ -5,8 +5,10 @@
 **Last updated:** 2026-07-06 (session 1)
 
 On "continue": check logs/bulk_status.json + `tail logs/bulk_download.log`.
-If not "BULK DONE" and no python bulk_download process alive, relaunch:
-  `nohup .venv/bin/python src/bulk_download.py >> logs/bulk_download.log 2>&1 &`
+Liveness check MUST be exact-match (pgrep -f false-positives on its own shell wrapper):
+  `ps -eo pid,cmd | awk '$2==".venv/bin/python" && $3=="src/bulk_download.py"'`
+If not "BULK DONE" and truly dead, relaunch:
+  `nohup .venv/bin/python src/bulk_download.py >> logs/bulk_download.log 2>&1 & disown`
 (resumes from per-day markers; ~1-2 min/day in the 15m era, ~4 min/day in the 5m era;
 zero errors through day 99 of 268 as of 2026-07-06 16:50 UTC).
 Once "BULK DONE", run in order WITHOUT asking:
