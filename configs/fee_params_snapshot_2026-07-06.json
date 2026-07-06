@@ -1,0 +1,71 @@
+{
+ "snapshot_utc": "2026-07-06T15:15:00.633602+00:00",
+ "markets": [
+  {
+   "slug": "btc-updown-5m-1783371900",
+   "condition_id": "0x9698ed27e3a1c6e98ed52b4eb8c3526f655e202f77ed1d9092e5aeaa75a62f12",
+   "info": {
+    "fd": {
+     "r": 0.07,
+     "e": 1,
+     "to": true
+    }
+   }
+  },
+  {
+   "slug": "btc-updown-5m-1783369800",
+   "condition_id": "0xc3c79bd26aae1bf12d4909e8a4a75f6c61380c8c82d6429e24407b100c4c31ba",
+   "info": {
+    "fd": {
+     "r": 0.07,
+     "e": 1,
+     "to": true
+    }
+   }
+  },
+  {
+   "slug": "btc-updown-5m-1783340400",
+   "condition_id": "0xcfb261a64b05a4b32ec4472e7e8625a077b8d67bb564fa6645cfeec686fa0590",
+   "info": {
+    "fd": {
+     "r": 0.07,
+     "e": 1,
+     "to": true
+    }
+   }
+  },
+  {
+   "slug": "btc-updown-5m-1783317000",
+   "condition_id": "0xcdbc8b9f82dfe601589eb4d7169c0791f93bd2b5d60de1de1075b9681b1e178e",
+   "info": {
+    "fd": {
+     "r": 0.07,
+     "e": 1,
+     "to": true
+    }
+   }
+  },
+  {
+   "slug": "btc-updown-5m-1783320600",
+   "condition_id": "0xf67e7e4ff0adf0199adf5aa4919221aa37bc3176c0b94bb0140f127d7b9b6e0d",
+   "info": {
+    "fd": {
+     "r": 0.07,
+     "e": 1,
+     "to": true
+    }
+   }
+  },
+  {
+   "slug": "btc-updown-5m-1783314600",
+   "condition_id": "0x4bcfd0a35d1aafaa4a052d0274c969e45ed15c0c801e012f1a2518b582ecd083",
+   "info": {
+    "fd": {
+     "r": 0.07,
+     "e": 1,
+     "to": true
+    }
+   }
+  }
+ ]
+}

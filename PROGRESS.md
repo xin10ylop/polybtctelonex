@@ -1,51 +1,78 @@
 # PROGRESS — Polymarket BTC Up/Down Strategy Discovery
 
 **Current phase:** 0 (Data acquisition & integrity)
-**Current step:** 0.2 coverage audit (in progress)
+**Current step:** GATE-0-disk — awaiting user confirmation to launch bulk download (0.4)
 **Last updated:** 2026-07-06 (session 1)
 
-## Environment facts (verified this session)
+If the user says "continue" / "go ahead": launch bulk immediately:
+  `nohup .venv/bin/python src/bulk_download.py > logs/bulk_download.log 2>&1 &`
+  `nohup .venv/bin/python src/bulk_binance.py  > logs/bulk_binance.log  2>&1 &`
+then monitor logs/bulk_status.json; after completion run in order:
+  1. `.venv/bin/python src/fit_fee_history.py`   (empirical fee regimes -> configs/fee_regimes.json)
+  2. build full windows table via src/windows.py over all dates -> data/processed/windows.parquet
+  3. `.venv/bin/python src/split_holdout.py`      (60/20/20, physical HOLDOUT move + loader guard)
+  4. re-run full GATE 0 checks; update reports/; then Phase 1.
 
-- Remote ephemeral container (Claude Code on the web). Repo: xin10ylop/polybtctelonex,
-  branch `claude/polymarket-btc-strategy-ys9coc`. **Data does NOT survive container
-  reclamation** — only what is committed+pushed. Downloads must be re-runnable/resumable.
-- Disk: **only ~31 GB available** (< the 120 GB the brief wants). Bulk download (0.4) needs
-  either user confirmation to proceed with a reduced/rolling footprint, or a bigger machine.
-- 4 CPU cores, 15 GB RAM, Python 3.11.15, venv at `.venv/`.
-- Telonex API verified real & reachable. Schema ground truth = SDK source
-  (`.venv/lib/python3.11/site-packages/telonex/`), v0.4.0:
-  - Download: `GET https://api.telonex.io/v1/downloads/{exchange}/{channel}/{date}`
-    with `Authorization: Bearer $TELONEX_API_KEY`; identifiers: `asset_id` OR
-    `slug`+`outcome` OR `market_id`+`outcome`; returns Parquet (redirect to presigned S3).
-    404 = no data that day. 403 = entitlement. 429 = rate limit w/ Retry-After.
-  - Availability (public): `GET /v1/availability/{exchange}?slug=...&outcome=...`
-  - Free datasets (no auth): `GET /v1/datasets/polymarket/markets` and `/tags`.
-  - Channels: trades, quotes, book_snapshot_5/25/full, onchain_fills, crypto_prices,
-    all_onchain_fills (whole-exchange, Pro tier, no identifiers).
-  - **crypto_prices (Chainlink resolution feed) only exists from 2026-04-02** (per
-    telonex.io/llms.txt). This bounds windows-table open/close reconstruction.
-- Polymarket gamma API + CLOB API + data.binance.vision all reachable.
+## Environment facts (verified)
 
-## Done
+- Remote ephemeral container. Branch `claude/polymarket-btc-strategy-ys9coc`. Data does NOT
+  survive container reclamation — only committed files. All downloads resumable by design.
+- Disk: ~31 GB available (< brief's 120 GB threshold — hence the confirmation gate).
+  Measured footprint of compressed pipeline: ~17 GB total (see "Storage design" below).
+- 4 cores, 15 GB RAM, Python 3.11 venv at `.venv/` (polars, duckdb, xgboost, lightgbm,
+  sklearn, scipy, statsmodels, matplotlib, pytest, telonex SDK 0.4.0 all installed).
+- Telonex API schema verified from SDK source; endpoints in src/telonex_dl.py docstring.
+  Key facts: Up/Down books are exact mirrors (only Up needed); crypto_prices (Chainlink
+  btcusd) exists 2026-04-02→now; markets metadata parquet is free and includes result_id
+  (resolution), asset ids, and per-channel coverage dates.
+- Fee ground truth (docs + live CLOB + on-chain fills all agree):
+  fee = shares × r × (p(1-p))^e, taker-only; currently r=0.07, e=1 for all btc-updown.
+  Live snapshot: configs/fee_params_snapshot_2026-07-06.json. Pre-2026-01-05: no fees
+  (2025-11-15 fills files have no taker_fee column at all).
+  NOTE: the brief's formula (extra ×p) was wrong; official docs table verified exactly.
+- Resolution rule (official + verified 288/288 on 2026-06-15): first Chainlink tick
+  (source `timestamp_us`) at/after boundary; close >= open → Up (result_id "0").
+- Coverage (reports/phase0_coverage.md): 15m tick data 2025-10-11→now (~9mo);
+  5m 2026-02-12→now (~5mo); 4h 2025-10-15→now; hourly series ENDED 2026-04-06.
 
-- [x] `.env` written with TELONEX_API_KEY (gitignored, chmod 600). Never print it.
-- [x] `.gitignore` (data/, logs/, .venv/, .env, results/raw_grids/)
-- [x] Directory layout created (data/raw, data/processed, data/HOLDOUT, configs, results,
-      reports, logs, src, tests)
-- [x] venv + telonex SDK 0.4.0 installed; bulk pip install (polars, duckdb, xgboost, ...)
-      running in background → `logs/pip_install.log`
-- [x] CLAUDE.md with the five hard rules
-- [x] Telonex API schema verified from SDK source (see above)
+## Storage design (measured on real days)
 
-## Next (in order)
+Raw is ~1.5 GB/day (5m era) — consolidated via src/consolidate.py to ~62 MB/day:
+quotes = BBO price-change rows only (prices full fidelity, 96% of updates are size-only
+jitter); books = cost-to-fill curves ($50/$200/$1k/$5k both sides) + depth on 250ms grid;
+trades/fills full res; raw deleted after consolidation (--rm-raw). 15m era ≈ 19 MB/day.
+Estimated totals: Telonex ~12 GB + Binance ~4 GB. Bulk runtime est. 8-14 h.
 
-- [ ] 0.2: Download free markets dataset; enumerate btc-updown-{5m,15m,1h} markets;
-      query availability for sample markets + crypto_prices; write reports/phase0_coverage.md
-- [ ] 0.3: One-day pipeline validation (download 1 day of key channels for 5m markets,
-      parse → store → windows, validate)
-- [ ] GATE-0 disk decision: surface 31 GB constraint to user before 0.4 bulk download
-- [ ] 0.4 bulk download → 0.5 windows table → 0.6 fee regimes → 0.7 holdout split → GATE 0
+## Done (session 1)
 
-## Output paths so far
+- [x] .env with key (gitignored); .gitignore; dir layout; venv
+- [x] 0.2 coverage audit → reports/phase0_coverage.md
+- [x] 0.3 one-day pipeline validation (2026-06-15 full 5m day + 15m-era day 2025-11-15):
+      download → consolidate → windows → outcomes 288/288 vs result_id
+- [x] Downloader (src/telonex_dl.py), day worker (src/download_day.py, resumable,
+      marker files), consolidation (src/consolidate.py, schema-evolution aware)
+- [x] 0.5 windows builder (src/windows.py) with >= tie rule
+- [x] 0.6 fee model (src/fees.py) + live param snapshot + dated regimes (empirical
+      refinement script src/fit_fee_history.py ready, runs post-bulk)
+- [x] Execution primitives (src/execution.py): book-walk taker + trade-through maker
+- [x] Loader with HOLDOUT guard (src/loader.py); splitter ready (src/split_holdout.py)
+- [x] GATE 0 unit tests ALL PASSING (15): fee worked examples exact, book-walk vs hand
+      values, vectorized walk vs reference, maker fill rules, look-ahead shift test
+      (shifted feed flips ~50% of outcomes; unshifted matches ≥99.9% of resolutions)
+- [x] Binance pipeline validated; bulk scripts ready (src/bulk_download.py, bulk_binance.py)
+- [x] Cross-source reconciliation vs Polymarket CLOB prices-history API
+      → reports/phase0_reconciliation.md (250 windows sampled)
 
-- logs/pip_install.log — background package install
+## GATE 0 status
+
+- Outcomes ≥99.9%: PASS (288/288 on validation day; full-history check re-runs post-bulk)
+- Look-ahead test: PASS
+- Coverage report: DONE (gaps explained: 5m listing gap Jan27-Feb11 predates tick coverage)
+- Fee worked examples: PASS (exact vs official docs table)
+- Cross-source reconciliation ≥200 windows: see reports/phase0_reconciliation.md
+- Unit tests (fees, slippage, maker fills): PASS (15/15)
+
+## Next
+
+- [ ] USER CONFIRMATION for bulk (disk 31 GB < 120 GB brief threshold; plan fits in ~17 GB)
+- [ ] 0.4 bulk (Telonex + Binance) → fee fit → windows.parquet → 0.7 holdout split → GATE 0 full → Phase 1
