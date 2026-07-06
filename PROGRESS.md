@@ -1,13 +1,15 @@
 # PROGRESS — Polymarket BTC Up/Down Strategy Discovery
 
 **Current phase:** 0 (Data acquisition & integrity)
-**Current step:** 0.4 bulk download RUNNING (user confirmed). Watchdog self-wakeups re-kick jobs after container restarts and chain post-bulk steps (fee fit → windows → split_holdout → GATE 0 → Phase 1). Phase 1 numeric machinery already built+tested: src/phase1_microstructure.py (sections 1,3,4,5,6) and src/phase1_leadlag.py (section 2).
+**Current step:** 0.4 Telonex bulk RUNNING as detached nohup (user's instruction: no session monitoring; user returns with 'continue' when done). Binance bulk COMPLETE (all days, none missing). Phase 1 numeric machinery built+tested: src/phase1_microstructure.py (sections 1,3,4,5,6), src/phase1_leadlag.py (section 2).
 **Last updated:** 2026-07-06 (session 1)
 
-If the user says "continue" / "go ahead": launch bulk immediately:
-  `nohup .venv/bin/python src/bulk_download.py > logs/bulk_download.log 2>&1 &`
-  `nohup .venv/bin/python src/bulk_binance.py  > logs/bulk_binance.log  2>&1 &`
-then monitor logs/bulk_status.json; after completion run in order:
+On "continue": check logs/bulk_status.json + `tail logs/bulk_download.log`.
+If not "BULK DONE" and no python bulk_download process alive, relaunch:
+  `nohup .venv/bin/python src/bulk_download.py >> logs/bulk_download.log 2>&1 &`
+(resumes from per-day markers; ~1-2 min/day in the 15m era, ~4 min/day in the 5m era;
+zero errors through day 99 of 268 as of 2026-07-06 16:50 UTC).
+Once "BULK DONE", run in order WITHOUT asking:
   1. `.venv/bin/python src/fit_fee_history.py`   (empirical fee regimes -> configs/fee_regimes.json)
   2. build full windows table via src/windows.py over all dates -> data/processed/windows.parquet
   3. `.venv/bin/python src/split_holdout.py`      (60/20/20, physical HOLDOUT move + loader guard)
