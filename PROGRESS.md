@@ -1,7 +1,7 @@
 # PROGRESS — Polymarket BTC Up/Down Strategy Discovery
 
 **Current phase:** 0 (Data acquisition & integrity)
-**Current step:** 0.4 Telonex bulk RUNNING as detached nohup (user's instruction: no session monitoring; user returns with 'continue' when done). Binance bulk COMPLETE (all days, none missing). Phase 1 numeric machinery built+tested: src/phase1_microstructure.py (sections 1,3,4,5,6), src/phase1_leadlag.py (section 2).
+**Current step:** 0.4 Telonex bulk RUNNING (detached nohup, PID varies). Self-wakeup watchdog re-armed every ~40 min (user approved 2026-07-06 20:47 UTC): revives container, re-kicks download, chains post-bulk steps automatically on BULK DONE. Binance bulk COMPLETE (all days, none missing). Phase 1 numeric machinery built+tested: src/phase1_microstructure.py (sections 1,3,4,5,6), src/phase1_leadlag.py (section 2).
 **Last updated:** 2026-07-06 (session 1)
 
 On "continue": check logs/bulk_status.json + `tail logs/bulk_download.log`.
