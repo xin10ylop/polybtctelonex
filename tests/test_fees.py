@@ -53,3 +53,19 @@ def test_linear_in_shares():
 def test_precision_5dp():
     # tiny trades near extremes can round to zero (documented)
     assert fees.taker_fee(0.001, 0.01, "2026-06-15", "5m") == 0.0
+
+
+def test_historical_documented_peaks():
+    """Changelog worked examples: peak 1.56% (Jan 5 era) and 1.80% (V2, Mar 30)."""
+    import importlib
+    importlib.reload(fees)
+    # 15m, Feb 2026: peak fee per 100 shares at 50c = $1.56
+    assert round(fees.taker_fee(100, 0.5, "2026-02-01", "15m"), 2) == 1.56
+    # V2 era April: $1.80
+    assert round(fees.taker_fee(100, 0.5, "2026-04-15", "5m"), 2) == 1.80
+    # post-May-7: $1.75 (current docs table)
+    assert round(fees.taker_fee(100, 0.5, "2026-06-15", "5m"), 2) == 1.75
+    # 5m markets did not exist / no fees before Feb 12
+    assert fees.taker_fee(100, 0.5, "2026-01-20", "5m") == 0.0
+    # 4h fee-free until Mar 6
+    assert fees.taker_fee(100, 0.5, "2026-02-20", "4h") == 0.0

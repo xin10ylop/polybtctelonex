@@ -94,7 +94,9 @@ def consolidate_fills(date: str) -> None:
         raw = pl.read_parquet(path)
         # schema evolution: pre-fee-era files (e.g. 2025-11-15) have no taker_fee
         # or outcome_id columns — fees genuinely didn't exist yet.
-        fee_col = (pl.col("taker_fee").cast(pl.Float64) if "taker_fee" in raw.columns
+        # non-strict: some days (e.g. 2026-04-28) carry taker_fee as empty strings
+        fee_col = (pl.col("taker_fee").cast(pl.Float64, strict=False).fill_null(0.0)
+                   if "taker_fee" in raw.columns
                    else pl.lit(0.0, dtype=pl.Float64)).alias("taker_fee")
         oid_col = (pl.col("outcome_id") if "outcome_id" in raw.columns
                    else pl.lit(None, dtype=pl.UInt8)).alias("outcome_id")

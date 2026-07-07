@@ -62,11 +62,18 @@ def build_windows(family: str, dates: list[str], holdout_final_run: bool = False
         wts_us = meta["wts"].to_numpy() * 1_000_000
         i_open = np.searchsorted(t, wts_us, side="left")
         i_close = np.searchsorted(t, wts_us + dur * 1_000_000, side="left")
-        valid = (i_open < len(t)) & (i_close < len(t))
-        opens = np.where(valid, p[np.clip(i_open, 0, len(t) - 1)], np.nan)
-        closes = np.where(valid, p[np.clip(i_close, 0, len(t) - 1)], np.nan)
-        recon = np.where(np.isnan(opens) | np.isnan(closes), None,
-                         np.where(closes >= opens, "0", "1"))
+        # the matched tick must be NEAR its boundary (feed ticks ~1/s; 60s guard).
+        # Without this, windows outside feed coverage silently match far-away ticks.
+        MAX_LAG_US = 60_000_000
+        io = np.clip(i_open, 0, len(t) - 1)
+        ic = np.clip(i_close, 0, len(t) - 1)
+        valid = ((i_open < len(t)) & (i_close < len(t))
+                 & (t[io] - wts_us <= MAX_LAG_US)
+                 & (t[ic] - (wts_us + dur * 1_000_000) <= MAX_LAG_US))
+        opens = np.where(valid, p[io], np.nan)
+        closes = np.where(valid, p[ic], np.nan)
+        recon = [("0" if c >= o else "1") if v else None
+                 for v, o, c in zip(valid.tolist(), opens.tolist(), closes.tolist())]
         out = out.with_columns(
             pl.Series("open_chainlink", opens, dtype=pl.Float64),
             pl.Series("close_chainlink", closes, dtype=pl.Float64),
