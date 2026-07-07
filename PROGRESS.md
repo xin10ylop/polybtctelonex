@@ -1,14 +1,12 @@
 # PROGRESS — Polymarket BTC Up/Down Strategy Discovery
 
-**Current phase:** 3 (Strategy grid) — Phases 0, 1, 2 COMPLETE
-**Current step:** Build Phase 3: vectorized backtest engine over results/features +
-bookcurves (taker fills via buy/sell_avgpx curves as-of T+latency, maker fills via
-trade-through on trades tape), programmatic grid (10 families + auto signal-mining over
-every feature x threshold-grid x horizon x direction), sizing grid, latency 250ms/1s/3s.
-Then GATE 3 (look-ahead re-test on config sample, 25-trade evidence-chain audit,
-leaderboard) -> Phase 4 gauntlet.
-GATE 2 PASSED: 305 feature-day files (5m 90d, 15m 214d, holdout-dated file removed),
-leakage scan clean, 20/20 manual as-of spot-checks exact.
+**Current phase:** COMPLETE — FINAL_REPORT.md delivered (zero survivors; holdout sealed)
+**Current step:** DONE. Phases 0-4 complete; Phase 5 skipped per GATE 4 (zero
+survivors -> nothing to run on holdout; holdout remains sealed). FINAL_REPORT.md is the
+deliverable. Gauntlet: 12,379 configs, best val_t=1.69 vs deflated bar 4.34, zero pass.
+GATE 3 audits passed (25/25 trade evidence chain, 12/12 look-ahead). Phase 6 (live
+deployment): NOT recommended, no survivor. If re-running under changed fee conditions:
+src/grid.py + src/phase3_ml.py + src/phase4_gauntlet.py regenerate everything.
 
 On "continue": check logs/bulk_status.json + `tail logs/bulk_download.log`.
 Liveness check MUST be exact-match (pgrep -f false-positives on its own shell wrapper):
