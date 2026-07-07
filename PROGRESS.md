@@ -1,7 +1,20 @@
 # PROGRESS — Polymarket BTC Up/Down Strategy Discovery
 
-**Current phase:** 0 (Data acquisition & integrity)
-**Current step:** 0.4 Telonex bulk RUNNING (detached nohup, PID varies). Self-wakeup watchdog re-armed every ~40 min (user approved 2026-07-06 20:47 UTC): revives container, re-kicks download, chains post-bulk steps automatically on BULK DONE. Binance bulk COMPLETE (all days, none missing). Phase 1 numeric machinery built+tested: src/phase1_microstructure.py (sections 1,3,4,5,6), src/phase1_leadlag.py (section 2).
+**Current phase:** 2 (Feature library) — Phases 0 and 1 COMPLETE
+**Current step:** Phase 2 — generate feature store over TRAIN+VAL via src/features.py
+(runner needed: loop non-holdout dates for 5m+15m, timeout-570 chunks, resumable by
+existing results/features/{family}/{date}.parquet). Then GATE 2 (spot-check 20 windows,
+leakage scan) → Phase 3 grid.
+DONE: bulk 268/268 days; fee regimes FINAL (changelog+empirical: 15m r=.0624 from
+2026-01-05, 5m launched WITH fees 2026-02-12, all-crypto 2026-03-06, V2 r=.072
+2026-03-30, r=.07 from 2026-05-07); windows.parquet (68,675 rows; GATE-0 outcome
+match 5m 99.93% 15m 99.98% 4h 100%); holdout split train≤2026-03-19 / val≤2026-05-12 /
+HOLDOUT 2026-05-13..07-05 (648 files moved, guard verified); Phase 1 report written
+(reports/phase1_microstructure.md, GATE 1 PASS) — plots still TODO (load dataviz skill
+first). Phase 1 headlines: calibration pocket +2.2c at 0.55-0.70; oracle lag 1.25s
+stable vs odds lag 250-500ms decaying; late-window costs double; outcomes
+anti-persistent (streak sizing = control only); 5m fee era: takers -251k, makers -1.0M
+net, fees +1.59M — both sides lose.
 **Last updated:** 2026-07-06 (session 1)
 
 On "continue": check logs/bulk_status.json + `tail logs/bulk_download.log`.

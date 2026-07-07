@@ -46,14 +46,20 @@ def build_windows(family: str, dates: list[str], holdout_final_run: bool = False
     d1 = int(dt.datetime.fromisoformat(dates[-1] + "T00:00:00+00:00").timestamp()) + 86400
     meta = market_meta(family, d0, d1)
 
-    # price feed must extend one day past the end for last-window closes
+    # price feed must extend one day past the end for last-window closes;
+    # if that next day lies in HOLDOUT, proceed without it (the affected final
+    # windows get null outcomes via the boundary-proximity guard).
     next_day = (dt.date.fromisoformat(dates[-1]) + dt.timedelta(days=1)).isoformat()
-    cp_dates = dates + [next_day]
-    try:
-        cp = (loader.load_crypto_prices(cp_dates, holdout_final_run)
-              .select("timestamp_us", "price").collect().sort("timestamp_us"))
-    except FileNotFoundError:
-        cp = None
+    cp = None
+    for cp_dates in (dates + [next_day], dates):
+        try:
+            cp = (loader.load_crypto_prices(cp_dates, holdout_final_run)
+                  .select("timestamp_us", "price").collect().sort("timestamp_us"))
+            break
+        except loader.HoldoutViolation:
+            continue
+        except FileNotFoundError:
+            break
 
     out = meta.with_columns(pl.lit(dur, dtype=pl.Int32).alias("duration"))
     if cp is not None and len(cp):

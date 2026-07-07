@@ -142,18 +142,28 @@ def main() -> None:
     rng = loader.holdout_range()
     if rng:
         dates = [d for d in dates if not (rng[0] <= d <= rng[1])]
-    rows = []
-    for d in dates:
-        if d in have:
-            continue
-        rows += analyze_date(d)
-    if rows:
+    os.makedirs(os.path.dirname(OUT), exist_ok=True)
+    rows, n_new = [], 0
+    todo = [d for d in dates if d not in have]
+
+    def flush():
+        nonlocal rows
+        if not rows:
+            return
         new = pl.DataFrame(rows)
         if os.path.exists(OUT):
             new = pl.concat([pl.read_parquet(OUT), new], how="diagonal")
-        os.makedirs(os.path.dirname(OUT), exist_ok=True)
         new.write_parquet(OUT)
-    print(f"leadlag: {len(rows)} new date-pairs analyzed")
+        rows = []
+
+    for i, d in enumerate(todo):
+        rows += analyze_date(d)
+        n_new += 1
+        if (i + 1) % 10 == 0:
+            flush()
+            print(f"leadlag checkpoint: {d}", flush=True)
+    flush()
+    print(f"leadlag: {n_new} new dates analyzed")
 
 
 if __name__ == "__main__":
