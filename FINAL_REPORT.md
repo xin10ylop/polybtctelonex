@@ -133,3 +133,31 @@ materially or you obtain sub-100ms infrastructure.
 *The holdout (2026-05-13 → 2026-07-05) remains sealed and unused. If a future
 re-run under changed conditions produces survivors, it is still valid for a
 one-shot final test.*
+
+---
+
+## Appendix: user-requested extension pass (2026-07-07)
+
+At the user's request, three further hypothesis spaces were tested under the
+same gauntlet (thresholds unchanged, multiple-testing count updated):
+
+1. **Cross-timeframe (5m × concurrent 15m market)** — 5m entries gated by the
+   concurrent 15m market's implied probability, velocity, and agreement with
+   the 5m price, plus an exhaustive mined pass over all four new features
+   (~560 configs). Best validation t-stat: **0.06**. Nothing.
+2. **Maker-entry family (fee-free entries)** — resting limit entries at
+   join/behind/mid−2¢/mid−3¢, gated by fair value, 15m agreement, or Binance
+   momentum, filled under the conservative strict trade-through rule (~160
+   configs, thousands of validation fills each). Every configuration is
+   **negative** (val t −0.7 to −0.9). This is adverse selection measured
+   directly: resting orders fill precisely when the market moves against
+   them, and the loss exceeds the fee saved — consistent with the on-chain
+   finding that makers in aggregate lose net of rebates in the 5m era.
+3. **$5 bet sizing** — per-trade t-statistics are scale-free and all fills
+   were priced with the $50-bucket book walk, which upper-bounds a $5 order's
+   cost. These results therefore ARE the $5-bet results. For context, even the
+   single best (non-significant) config's mean edge translates to ≈ **$0.30
+   per $5 trade before any infrastructure costs**, indistinguishable from luck.
+
+Updated totals: **~13,100 configurations, best validation t-stat still 1.69,
+zero survivors.** The extension pass strengthens the original verdict.
