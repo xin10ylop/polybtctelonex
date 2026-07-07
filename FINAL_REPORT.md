@@ -187,3 +187,27 @@ This region (negative decision offsets) was genuinely untested. Results
   every configuration negative in validation (best val t −2.19).
 
 Updated totals: **~13,700 configurations. Zero survivors. Verdict unchanged.**
+
+## Appendix 3: fine-grained close-out (2026-07-07)
+
+Final user-requested sweeps, all under unchanged gauntlet thresholds:
+
+1. **Per-cent entry bands 47¢…53¢** (not lumped) × offsets {−10s, −3s, +5s,
+   +20s, +60s} × 7 direction sources (blind both ways, Binance 1m/5m candles,
+   15m market sign, prior-window follow AND fade) × maker exits +3¢/+5¢ —
+   980 configs, 640 with ≥300 validation trades: **every single one negative**
+   (best val t −1.92; profit factors 0.53–0.76 at 85–88% win rates).
+2. **Optimistic fill rule** (resting sell fills the moment price merely
+   touches the limit — the most generous assumption possible for small
+   orders): results are near-identical to the conservative rule and still
+   uniformly negative. Fill generosity is not the binding constraint;
+   the win/loss asymmetry plus the entry fee is.
+3. **Combined pre-open ML** (one model given 5m book + 15m market +
+   prior-window live price + Binance candles + volatility + VWAP, with
+   confidence-margin abstention as the "when to avoid" dial): all margins
+   negative out-of-sample. The high-abstention variant is the study's
+   definitive overfitting exhibit: **train t +2.64 / pf 1.80 / 63% wins →
+   validation t −2.48 / pf 0.62 / 37% wins.**
+
+Final totals: **~14,800 configurations. Zero survivors. The search is closed;
+further passes on this dataset would only manufacture false positives.**
