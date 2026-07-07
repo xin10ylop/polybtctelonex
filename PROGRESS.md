@@ -1,21 +1,14 @@
 # PROGRESS — Polymarket BTC Up/Down Strategy Discovery
 
-**Current phase:** 2 (Feature library) — Phases 0 and 1 COMPLETE
-**Current step:** Phase 2 — generate feature store over TRAIN+VAL via src/features.py
-(runner needed: loop non-holdout dates for 5m+15m, timeout-570 chunks, resumable by
-existing results/features/{family}/{date}.parquet). Then GATE 2 (spot-check 20 windows,
-leakage scan) → Phase 3 grid.
-DONE: bulk 268/268 days; fee regimes FINAL (changelog+empirical: 15m r=.0624 from
-2026-01-05, 5m launched WITH fees 2026-02-12, all-crypto 2026-03-06, V2 r=.072
-2026-03-30, r=.07 from 2026-05-07); windows.parquet (68,675 rows; GATE-0 outcome
-match 5m 99.93% 15m 99.98% 4h 100%); holdout split train≤2026-03-19 / val≤2026-05-12 /
-HOLDOUT 2026-05-13..07-05 (648 files moved, guard verified); Phase 1 report written
-(reports/phase1_microstructure.md, GATE 1 PASS) — plots still TODO (load dataviz skill
-first). Phase 1 headlines: calibration pocket +2.2c at 0.55-0.70; oracle lag 1.25s
-stable vs odds lag 250-500ms decaying; late-window costs double; outcomes
-anti-persistent (streak sizing = control only); 5m fee era: takers -251k, makers -1.0M
-net, fees +1.59M — both sides lose.
-**Last updated:** 2026-07-06 (session 1)
+**Current phase:** 3 (Strategy grid) — Phases 0, 1, 2 COMPLETE
+**Current step:** Build Phase 3: vectorized backtest engine over results/features +
+bookcurves (taker fills via buy/sell_avgpx curves as-of T+latency, maker fills via
+trade-through on trades tape), programmatic grid (10 families + auto signal-mining over
+every feature x threshold-grid x horizon x direction), sizing grid, latency 250ms/1s/3s.
+Then GATE 3 (look-ahead re-test on config sample, 25-trade evidence-chain audit,
+leaderboard) -> Phase 4 gauntlet.
+GATE 2 PASSED: 305 feature-day files (5m 90d, 15m 214d, holdout-dated file removed),
+leakage scan clean, 20/20 manual as-of spot-checks exact.
 
 On "continue": check logs/bulk_status.json + `tail logs/bulk_download.log`.
 Liveness check MUST be exact-match (pgrep -f false-positives on its own shell wrapper):
