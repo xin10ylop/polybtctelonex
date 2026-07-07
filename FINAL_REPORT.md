@@ -161,3 +161,29 @@ same gauntlet (thresholds unchanged, multiple-testing count updated):
 
 Updated totals: **~13,100 configurations, best validation t-stat still 1.69,
 zero survivors.** The extension pass strengthens the original verdict.
+
+## Appendix 2: pre-open pass (user-specified strategy shapes, 2026-07-07)
+
+The user proposed: enter ~20s BEFORE window open near 50¢, immediately rest a
+maker sell at +5¢, $5 stake, direction from the 5m market itself / the
+previous window / the 15m market / Binance candles, with and without ML.
+This region (negative decision offsets) was genuinely untested. Results
+(720 rule configs + 36 ML configs at offsets −30/−10/−3s):
+
+- **Pre-open books are already professional**: 99.6% of windows are quoted
+  before open at the same 1¢ median spread. There is no sleepy pre-open gap.
+- **"Buy at 20¢ pre-open" is structurally impossible**: before open the BTC
+  delta is zero by definition, so the market always sits near 50¢ — the 20¢
+  band produced ZERO pre-open trades in 90 days.
+- **The exact 50¢→55¢ maker-scalp**: wins ~85% of the time (the +5¢ sell
+  fills), but the ~15% of unfilled positions ride to expiry as ~50¢ losers and
+  the taker entry fee eats the scalps: with prior-window direction signals,
+  val t = **−6.1 to −7.4** over ~2,000 trades each; blind versions val t
+  −2.5/−2.8 (profit factor 0.49–0.60). A textbook negative-skew scalp.
+- Direction sources: Binance candles (t −1.0), 15m market (thin samples,
+  nothing), previous-window follow AND fade (both negative — consistent with
+  near-zero serial dependence), blind up (best: t +1.02, i.e., luck-sized).
+- **Pre-open ML** (logit+LGBM, walk-forward, isotonic, 3 feature sets):
+  every configuration negative in validation (best val t −2.19).
+
+Updated totals: **~13,700 configurations. Zero survivors. Verdict unchanged.**
