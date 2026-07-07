@@ -211,3 +211,29 @@ Final user-requested sweeps, all under unchanged gauntlet thresholds:
 
 Final totals: **~14,800 configurations. Zero survivors. The search is closed;
 further passes on this dataset would only manufacture false positives.**
+
+## Appendix 4: stop-loss / early-exit pass (2026-07-07)
+
+User question: does a stop-loss help — if the maker sell hasn't filled after
+X seconds, cut the position at market instead of holding to expiry? Simulated
+on real second-by-second intra-window price paths (src/stop_sim.py), $5/trade,
+entry offsets {−10s, +20s, +60s}, direction from blind / Binance 1m candle /
+15m market, maker target +3¢/+5¢, stop times {5s, 10s, 20s, hold}.
+
+**Every stop-loss variant made results WORSE, not better.** Averaged across 24
+configurations: hold-to-expiry −$0.38/trade → stop-5s −$0.49 → stop-10s −$0.50
+→ stop-20s −$0.48. Best single config (entry +60s, 15m-direction, +5¢): hold
+−$0.28/trade (~−$10.53/day) vs stop-10s −$0.49/trade (~−$18.21/day).
+
+Mechanism: a resting +N¢ sell fails to fill precisely *because* price moved
+against the position, so the stop-out taker-sell executes BELOW entry AND pays
+a second taker fee. Because 5-minute BTC is near-symmetric, the stop cuts as
+many would-be recoveries as genuine losers, while charging an extra fee on
+every cut. Confirms the general result: in a fee-dominated efficient market,
+every added execution (stop, take-profit, re-entry) is another place to pay
+the fee — and the fee is the entire edge. No exit rule rescues a negative-edge
+entry.
+
+Final totals: **~15,500 configurations across entries, directions, ML/no-ML,
+timeframes, fill assumptions, sizings, and now exit/stop-loss rules. Zero
+survivors.**
