@@ -561,3 +561,30 @@ aligning the Binance nowcast interval by the measured ~1.25s Binance->
 Chainlink lead time (instead of symmetric 150ms trims) — a signal change,
 so it must earn its way through live paper A/B, not through re-backtesting
 spent data.
+
+## Appendix 10: the 1h family — full 9-month study and the spent reserve (2026-07-09)
+
+Telonex holds full order books for the hourly series across its entire
+window (the Apr-6 "end" was a slug rename). All 270 days downloaded and
+consolidated (src/hourly_bulk.py). Resolution = Binance 1H candle direct
+(765/765 verified); fees on-chain verified (0 pre-Mar-6, then 0.0624 /
+0.072 / 0.07 from May 7). Pre-registered splits; book-walk fills.
+
+**Final-seconds frozen transfer (src/nix1h_lastsec.py):**
+TRAIN (Oct-Mar 19, mostly fee-free): n=142, +$2.01/trade, t=8.56, 99.3% wins
+VAL (Mar 20-May 12): n=57, +$0.49/trade, t=1.59, 89.5% wins
+**RESERVE ONE-SHOT (May 13-Jul 7, single read, now spent): n=38,
+−$0.53/trade, t=−1.28, 78.9% wins, −$0.36/day. FAIL.**
+The 1h family followed the same arc as 5m/15m: rich in the fee-free winter,
+compressed through spring, negative in the current regime.
+
+**Mid-hour stale-quote sniper (calibrated win-prob, TRAIN-only isotonic,
+283,438 decision points): TRAIN t=0.44/0.63, VAL t=0.34/−0.39 — nothing.**
+The hourly market is efficient mid-window even without bot competition.
+EV-only lottery variant: one $495 December win, statistically nothing.
+
+**Current-regime bottom line across all three markets at $5 stakes:
+5m ~$0-3/day, 15m ~$0/day, 1h negative. The final-seconds edge is real,
+was worth $40+/day as recently as May, and is at or below the fee floor
+everywhere as of July. Deployment decisions must use these numbers, not
+the historical averages.**
