@@ -30,8 +30,8 @@ import numpy as np
 import polars as pl
 
 NOTIONALS = (50.0, 200.0, 1000.0, 5000.0)
-FAMILY_RE = re.compile(r"^(btc-updown-(?:5m|15m|4h))-(\d+)_(Up|Down)\.parquet$")
-DURATION = {"5m": 300, "15m": 900, "4h": 14400}
+FAMILY_RE = re.compile(r"^(btc-updown-(?:5m|15m|4h|1h))-(\d+)_(Up|Down)\.parquet$")
+DURATION = {"5m": 300, "15m": 900, "4h": 14400, "1h": 3600}
 GRID_US = 250_000  # 250ms book grid
 PRE_S, POST_S = 900, 30  # keep [wts-900, wts+dur+30]
 

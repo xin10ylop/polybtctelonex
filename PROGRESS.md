@@ -38,6 +38,8 @@ built and tested: bot/risk_engine.py + bot/config.json + tests/test_risk_engine.
 (16/16). Basis guard adopted (defensive overlay, +$21.79 net over timeline,
 blocks the Jul 6 fake-signal class). src/nix_audit.py regenerates the audit.
 
+**NIXULTIMATE 2.0 (1h family) IN PROGRESS:** hourly series ALIVE (slug rename Apr 6 fooled Phase 0); FULL Telonex book coverage Oct11-Jul7 downloaded+consolidated (data/processed/daily/1h/, 3.1GB, 270 dates, src/hourly_bulk.py); fees: 0 pre-Mar-6, then 0.0624/0.072/0.07 (configs updated, on-chain verified); resolution = Binance 1H candle direct (765/765); mirror exact. Splits for 1h: TRAIN<=Mar19, VAL Mar20-May12, RESERVE May13+ SEALED (loader guard; one-shot only). src/nix1h_lastsec.py (books-based, book-walk fills standard): frozen transfer TRAIN n=142 +$2.01/tr t=8.56 wr99.3%; VAL n=57 +$0.49/tr t=1.59; evonly variant = 1 lottery win, insignificant. NEXT (task 14, run without asking): (a) mid-hour stale-quote sniper — per-minute Binance fair vs 1h book asks, walk-forward calibrated win-prob (isotonic on TRAIN only), taker fills from bookcurves, hold to close; (b) near-resolution maker on 1h (9-month tail power); (c) straddle/panic/flow ports if warranted; then judge at deflated bar, one-shot RESERVE for survivors, Appendix 10, commit.
+
 On "continue": Appendices 7-9 are final. To extend fresh-OOS by another day D:
 fetch Binance (bulk_binance.do_klines/do_aggtrades), process_day(D, rm_raw=True),
 refresh markets metadata (`curl -sSL

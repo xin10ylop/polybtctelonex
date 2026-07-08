@@ -25,6 +25,23 @@ MARKETS = "data/raw/telonex/polymarket_markets.parquet"
 
 
 def market_meta(family: str, d0: int, d1: int) -> pl.DataFrame:
+    if family == "1h":
+        # hourly series uses ET-named slugs (two forms across the Apr-2026
+        # rename); wts from end_date_us; twins for the same hour dedupe to
+        # the year-form (books were stored per-wts the same way)
+        return (
+            pl.scan_parquet(MARKETS)
+            .filter(pl.col("slug").str.contains(r"^bitcoin-up-or-down-.*(am|pm)-et$"))
+            .filter(pl.col("end_date_us").is_not_null())
+            .with_columns(((pl.col("end_date_us") // 1_000_000) - 3600).alias("wts"),
+                          pl.col("slug").str.contains(r"-\d{4}-").alias("_yf"))
+            .filter((pl.col("wts") >= d0) & (pl.col("wts") < d1))
+            .sort("wts", "_yf")
+            .group_by("wts", maintain_order=True).last()
+            .select("slug", "wts", "market_id", "asset_id_0", "asset_id_1",
+                    "result_id", "status", "settled_at_us")
+            .collect()
+        )
     prefix = SLUG_PREFIX[family]
     return (
         pl.scan_parquet(MARKETS)
