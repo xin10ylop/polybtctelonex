@@ -1,0 +1,39 @@
+{
+  "signal": {
+    "comment": "FROZEN nix1/N8 parameters — changing any of these voids every backtest and OOS claim in FINAL_REPORT.md",
+    "families": {
+      "5m": {"duration_s": 300, "toff_s": 297},
+      "15m": {"duration_s": 900, "toff_s": 897}
+    },
+    "z_threshold": 1.5,
+    "ev_margin": 0.02,
+    "sigma_lookback_s": 300,
+    "binance_latency_us": 150000,
+    "fill_latency_us": 250000,
+    "tape_confirm_window_s": 1.5,
+    "tape_confirm_max_above_ask": 0.01
+  },
+  "risk": {
+    "bankroll_multiple_min": 20,
+    "max_concurrent_positions": 2,
+    "daily_loss_pause_stakes": 6,
+    "basis_guard_bp": 5.0,
+    "basis_guard_ask_below": 0.5,
+    "kill_broadcast_delay_median_s": 0.4,
+    "kill_rolling_wr_window": 100,
+    "kill_rolling_wr_min": 0.75,
+    "kill_slippage_window": 50,
+    "kill_slippage_max_avg": 0.01,
+    "kill_consecutive_red_days": 10,
+    "expected_fee_rate": {"5m": 0.07, "15m": 0.0624}
+  },
+  "ladder": {
+    "rung_stakes": [5, 25, 100, 300],
+    "paper_first": true,
+    "promote_min_days_on_rung": 7,
+    "promote_min_trades_on_rung": 100,
+    "promote_min_rolling_wr": 0.78,
+    "promote_requires_positive_rung_pnl": true,
+    "demote_on_losing_week": true
+  }
+}

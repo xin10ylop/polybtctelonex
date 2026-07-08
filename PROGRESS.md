@@ -30,7 +30,15 @@ n=266 +$2.11/trade t=5.8 (misses n>=300 bar), fresh-OOS Jul 6-7 ZERO trades
 src/nix_{straddle,panic,near,xtf_maker,quote,grid,flow_cols,judge}.py,
 src/nix_15m_lastsec.py; results/nix_*.parquet.
 
-On "continue": Appendices 7-8 are final. To extend fresh-OOS by another day D:
+**Full-timeline audit (Appendix 9, 2026-07-08, user-ordered — includes a
+flagged second read of the spent HOLDOUT, frozen params, audit only):**
+combined $/day at $5 stakes: Apr $40.20, May $39.45, Jun $3.79, Jul1-7 $2.19,
+Jul 6-7 zero. Decay mechanism: median final-3s ask 0.971->0.989. Risk engine
+built and tested: bot/risk_engine.py + bot/config.json + tests/test_risk_engine.py
+(16/16). Basis guard adopted (defensive overlay, +$21.79 net over timeline,
+blocks the Jul 6 fake-signal class). src/nix_audit.py regenerates the audit.
+
+On "continue": Appendices 7-9 are final. To extend fresh-OOS by another day D:
 fetch Binance (bulk_binance.do_klines/do_aggtrades), process_day(D, rm_raw=True),
 refresh markets metadata (`curl -sSL
 https://api.telonex.io/v1/datasets/polymarket/markets -o

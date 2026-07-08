@@ -501,3 +501,63 @@ combined paid ~$36/day at $5 stakes; in July both gates read shut.
    The zero-cost play: a live paper bot on free feeds watching BOTH
    families' EV gates in real time, trading only when a gate opens.
    That is the deployable NIXULTIMATE: nix1 + N8 + a gate monitor.
+
+## Appendix 9: full-timeline audit + deployment risk engine (2026-07-08)
+
+**Audit note:** at the user's order, the frozen nix1/N8 configs were evaluated
+across the ENTIRE Chainlink-feed era (Apr 2 - Jul 7), which includes a second,
+clearly-flagged read of the spent HOLDOUT period (May 13 - Jul 5). Parameters
+are frozen; nothing was or may be retuned from these results. Purpose:
+time the edge's decay and calibrate kill-switches. The audit pipeline
+reproduces the dev-era results exactly (5m Apr 2 - May 12: n=1131, $1,711.96
+— identical to Appendix 7's run). The pre-April era cannot be simulated by
+ANY oracle-feed strategy: the crypto_prices feed begins 2026-04-02.
+
+**Month by month, $5 stakes, frozen gates (src/nix_audit.py):**
+
+| Month | 5m: n / $/trade / t / $/day | 15m: n / $/trade / t / $/day | Combined $/day | 5m median final-3s ask |
+|---|---|---|---|---|
+| Apr | 844 / $1.16 / 5.0 / $33.71 | 156 / $1.21 / 3.7 / $6.49 | **$40.20** | 0.971 |
+| May | 587 / $1.44 / 6.4 / $27.30 | 157 / $2.40 / 4.3 / $12.15 | **$39.45** | 0.980 |
+| Jun | 333 / $0.29 / 1.4 / $3.20 | 64 / $0.28 / 1.0 / $0.59 | **$3.79** | 0.989 |
+| Jul 1-7 | 78 / $0.30 / 0.8 / $3.35 | 9 / −$0.90 / −1.1 / −$1.16 | **$2.19** | 0.974* |
+
+*small-n; Jul 6-7 alone: zero qualifying trades on both markets.
+
+**Reading:** the edge did not flip off — it decayed ~90% in one step between
+May and June and kept sliding. The mechanism is visible in the median ask of
+z-qualified windows (0.971 -> 0.989) and the trade count (1431 -> 397 -> 87
+per month combined): competitors reprice the final seconds harder every
+month. June was still (insignificantly) positive at ~$3.8/day; Jul 6-7 read
+zero. Deployment must therefore assume the CURRENT rate is ~$0-4/day at $5
+stakes unless live paper data shows otherwise; April-May economics return
+only if the competition regresses.
+
+**Risk engine (bot/risk_engine.py + bot/config.json + tests, 16/16 passing):**
+pure-logic engine the live bot must route every trade through.
+- Pre-trade: frozen EV gate; tape confirmation required; **basis guard** (see
+  below); post-only sanity on ask range; max 2 concurrent positions;
+  stake = ladder rung capped at bankroll/20 (dev max drawdown was 8.5x stake).
+- Kill-switches (auto-halt, operator-only reset, reset demotes to $5):
+  broadcast delay median < 0.4s; rolling-100 win rate < 75%; mean fill
+  slippage > 1c over 50 trades; any fee-param change; 10 consecutive red
+  days. Daily loss > 6 stakes = pause until next UTC day.
+- Stake ladder $5 -> $25 -> $100 -> $300 (paper first): promotion needs >= 7
+  days AND >= 100 trades on the rung, positive rung P&L, rolling wr >= 78%,
+  bankroll >= 20x next stake, and no halt/pause that week; a losing week
+  demotes one rung. Measurements advance the ladder, never the calendar.
+
+**Basis guard (improvement, adopted):** skip contrarian entries (ask < 0.50)
+when |Binance - Chainlink-anchor| > 5bp at decision time — the exact
+signature of the two Jul 6 fake signals (both blocked by the guard in unit
+tests; genuine low-ask winners pass). Full-timeline cost-benefit: 5m
++$30.85 BETTER with the guard on (the blocked set was net-losing, 34% wr);
+15m costs $9.06 over 3 months. Net +$21.79 AND it removes the documented
+catastrophic tail. This is a defensive overlay in the risk engine — the
+frozen signal itself is untouched.
+
+**Candidate improvement, NOT adopted (flagged for paper-mode A/B only):**
+aligning the Binance nowcast interval by the measured ~1.25s Binance->
+Chainlink lead time (instead of symmetric 150ms trims) — a signal change,
+so it must earn its way through live paper A/B, not through re-backtesting
+spent data.
