@@ -1,25 +1,31 @@
 # PROGRESS — Polymarket BTC Up/Down Strategy Discovery
 
-**Current phase:** COMPLETE — FINAL_REPORT.md delivered (zero survivors; holdout sealed)
-**Current step:** DONE. Phases 0-4 complete; Phase 5 skipped per GATE 4 (zero
-survivors -> nothing to run on holdout; holdout remains sealed). FINAL_REPORT.md is the
-deliverable. Gauntlet: 12,379 configs, best val_t=1.69 vs deflated bar 4.34, zero pass.
-GATE 3 audits passed (25/25 trade evidence chain, 12/12 look-ahead). Phase 6 (live
-deployment): NOT recommended, no survivor. If re-running under changed fee conditions:
-src/grid.py + src/phase3_ml.py + src/phase4_gauntlet.py regenerate everything.
+**Current phase:** COMPLETE + extensions. FINAL_REPORT.md (main verdict: zero grid
+survivors) + Appendices 1-7. **HOLDOUT IS SPENT** — read exactly once (Appendix 6,
+frozen oracle-trade configs). It must NEVER be read again; any further validation
+uses only genuinely fresh post-2026-07-05 days.
 
-On "continue": check logs/bulk_status.json + `tail logs/bulk_download.log`.
-Liveness check MUST be exact-match (pgrep -f false-positives on its own shell wrapper):
-  `ps -eo pid,cmd | awk '$2==".venv/bin/python" && $3=="src/bulk_download.py"'`
-If not "BULK DONE" and truly dead, relaunch:
-  `nohup .venv/bin/python src/bulk_download.py >> logs/bulk_download.log 2>&1 & disown`
-(resumes from per-day markers; ~1-2 min/day in the 15m era, ~4 min/day in the 5m era;
-zero errors through day 99 of 268 as of 2026-07-06 16:50 UTC).
-Once "BULK DONE", run in order WITHOUT asking:
-  1. `.venv/bin/python src/fit_fee_history.py`   (empirical fee regimes -> configs/fee_regimes.json)
-  2. build full windows table via src/windows.py over all dates -> data/processed/windows.parquet
-  3. `.venv/bin/python src/split_holdout.py`      (60/20/20, physical HOLDOUT move + loader guard)
-  4. re-run full GATE 0 checks; update reports/; then Phase 1.
+**State of the one survivor line of work:**
+- Appendix 6: oracle-feed final-seconds trade. Holdout one-shot: PAID feed variant
+  PASS (+$0.32/trade, t=2.4); broadcast-only variant FAIL. Requires paid Chainlink
+  Data Streams sub.
+- Appendix 7: FREE hybrid nowcast (PM broadcast anchor + Binance leading return),
+  frozen gates, src/oracle_hybrid.py. Dev n=1131 +$1.51/trade t=7.6; fresh-OOS
+  2026-07-06: ZERO trades (books 98-99c at final seconds; plus a discovered
+  Binance-Chainlink basis failure mode that fakes high |z| in calm windows —
+  2 confidently-wrong signals, unfilled only by tape-validation luck).
+  Fresh-OOS 2026-07-07: 3 trades +$1.61 (3/3 wins, 13/13 directions correct,
+  10/13 EV-starved at 93-99c). Two-day fresh-OOS: ~$0.80/day at $5 stakes vs
+  dev $20.9/day — signal alive, payment competed to the fee floor.
+
+On "continue": Appendix 7 is final. To extend fresh-OOS by another day D:
+fetch Binance (bulk_binance.do_klines/do_aggtrades), process_day(D, rm_raw=True),
+refresh markets metadata (`curl -sSL
+https://api.telonex.io/v1/datasets/polymarket/markets -o
+data/raw/telonex/polymarket_markets.parquet`), then
+`.venv/bin/python src/oracle_hybrid.py D --diagnose`. Next decision point: user
+chooses whether to build the Phase 6 live paper-trading bot (free feeds, $0
+risk, kill switches per report).
 
 ## Environment facts (verified)
 

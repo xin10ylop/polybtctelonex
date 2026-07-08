@@ -348,3 +348,87 @@ run stands as the legitimate one-shot.)*
 by >1¢ average over 50 trades, broadcast-delay median < 400ms (Polymarket
 infrastructure upgrade = edge death), fee param change, or 10 consecutive
 red days → flatten and halt.
+
+## Appendix 7: the free-feed hybrid nowcast — dev-brilliant, fresh-OOS zero (2026-07-08)
+
+**Constraint:** no paid Chainlink Data Streams subscription. **Reframe:** the
+paid feed can be *synthesized* from two free streams, because (a) Polymarket
+broadcasts every Chainlink tick on its public WSS with a median 1.1s delay,
+and (b) Binance (free WSS, ~100ms) leads the Chainlink source by ~1.25s
+(Phase 1 lead-lag). Construction, at decision time T:
+
+```
+anchor  = latest Chainlink tick already broadcast (server_ts <= T)   [stale ~1.1s]
+nowcast = Binance log-return from the anchor's SOURCE time (+150ms)
+          to T-150ms                                                 [bridges the gap]
+estimate = clog[anchor] + binance_return - clog[open]
+```
+
+All gates FROZEN from the holdout-confirmed oracle trade — toff=297s,
+|z|>=1.5 (sigma from prior-300s feed), EV gate fair-ask-fee >= 2c, $50-bucket
+book-walk fill at T+250ms, tape-validated (real print <= ask+1c within 1.5s),
+date-correct fees, $5 stakes. **No new tuning.** Simulator: src/oracle_hybrid.py.
+
+**Dev sample (Apr 2 – May 12, 41 days): n=1131, +$1.51/trade, t=7.6, 84.6% wins,
+83% green days** — statistically indistinguishable from the paid private feed on
+the same sample ($1.41/trade, t=7.7). The synthesis works.
+
+**But the holdout is spent** (Rule 2: read exactly once, for Appendix 6), so the
+hybrid can never be holdout-tested. The only honest verification left is
+genuinely fresh data: **2026-07-06**, completed after the holdout window closed,
+never in any split, metadata refreshed post-resolution.
+
+**Fresh-OOS result: ZERO trades.** Dev had no zero-trade day in 41 days
+(min 6, median 22) — this is far outside the dev distribution, not a quiet-day
+fluke. The diagnostic decomposition of Jul 6's 14 z-passed windows
+(dev min 19/day, median 66/day):
+
+- **9 blocked at the EV gate, all with asks 0.98–0.99** (dev median entry:
+  0.83). The signal called all 9 directions correctly — but the books had
+  already repriced the near-certain outcome, leaving <1c after fees. The
+  final-seconds crowd got faster between May and July.
+- **5 passed EV but found no tape-validated fill.** Three were real missed
+  wins (asks 0.51/0.79/0.87). **The other two were confident and WRONG**:
+  z=+5.9 and +4.4 ("Up certain", fair≈1.0) with the market pricing Up at
+  25c — and Down won. Verified against the full-day Chainlink tape: the
+  *paid* feed was flat in both windows (+0.1bp, −0.0bp — it would never have
+  traded). The error is specific to the free synthesis: Binance was trading
+  ~50 pts (8–16bp) above the Chainlink index and that basis was *moving*;
+  in a calm window (tiny sigma) a few bp of basis noise manufactures a huge
+  fake |z|. Only the conservative fill filter kept them out — luck, not design.
+
+**The failure mode lives exactly where the profit lives.** Dev decomposition
+by entry ask: the ask<0.50 "disagree with the market" bucket is n=230 at just
+54% wins but $4.85/trade — **65% of all dev profit** ($1,115 of $1,712). Those
+are precisely the trades the Binance–Chainlink basis can fake (Jul 6: 0-for-2).
+The asks>0.80 buckets win 95–98% but average $0.05–0.29/trade and are the first
+to be EV-starved as books tighten.
+
+**Structural preconditions on Jul 6:** broadcast delay median 1.05s (p95 1.5s)
+— intact, kill-switch not triggered. What changed is competition (books at
+98–99c in the final seconds) and what was exposed is basis fragility.
+
+**Fresh-OOS day 2 (2026-07-07): 3 trades, +$1.61, 3/3 wins.** 13 z-passed
+windows, all 13 directions correct (no basis failures this day); 10 blocked
+at the EV gate with asks 0.93–0.99; the 3 that cleared (asks 0.87/0.90/0.92)
+all filled at the book price and all won. A real but thin day: +$0.54/trade
+on 3 trades, vs dev's 22 trades/day median.
+
+**Measured trajectory of this edge:** dev $20.9/day (free hybrid, $5 stakes)
+→ holdout-era ~$4.5/day (paid feed, Appendix 6) → fresh-OOS Jul 6–7:
+$0.80/day (free hybrid). The signal still predicts correctly — 25 of 27
+z-passed directions right across both fresh days — what has collapsed is the
+*payment* for it: final-seconds books now sit at 98–99c where dev-era entries
+had a median of 83c. The trade has been competed down to the fee floor. Two
+fresh days is thin evidence, but it is the third consecutive point in a
+decaying series, and Rule 4 applies: reported as measured, not softened.
+
+**Verdict:** the free synthesis of the paid feed is real — dev t=7.6 with
+zero new parameters, and it still calls direction correctly out of sample —
+but the deployable economics as of Jul 6–7 are ~$0.80/day at $5 stakes
+(~$16/day IF $100 stakes fill), carrying the documented basis-blowup tail
+risk: one confidently-wrong 25c fill costs about 20 winning trades. The
+definitive zero-cost test is live paper trading on free feeds (PM WSS
+crypto_prices + Binance WSS), Phase 6 protocol, $0 at risk: if two weeks of
+paper fills reproduce dev-like economics, deploy $5 stakes; if they reproduce
+Jul 6–7, the answer was already in this appendix.
