@@ -114,3 +114,38 @@ Estimated totals: Telonex ~12 GB + Binance ~4 GB. Bulk runtime est. 8-14 h.
 
 - [ ] USER CONFIRMATION for bulk (disk 31 GB < 120 GB brief threshold; plan fits in ~17 GB)
 - [ ] 0.4 bulk (Telonex + Binance) → fee fit → windows.parquet → 0.7 holdout split → GATE 0 full → Phase 1
+
+## NIXULTIMATE 3.0 CAMPAIGN (2026-07-09, IN FLIGHT — continue without asking)
+
+WHY: BTC decay = retail crowd LEFT (on-chain: final-secs takers 13.9k->5.4k
+Apr->Jul), competition never arrived. The April-state persists on neglected
+coins. Jul 6 diagnostic (fresh day): winner-ask@T-3s median — ETH 0.940
+(q25 0.785!), SOL 0.970, BNB 0.960, XRP 0.980, DOGE/HYPE 0.990 w/ 22-24%
+<0.95 (BTC: 0.99, dead). Frozen machine on ETH Jul 6 (real ETHUSDT klines
+signal, size-checked): 4/4 wins +$3.97 at $5. Committed: src/mcdiag.py.
+
+RUNNING: src/multicoin_bulk.py (nohup, logs/multicoin_bulk.log) — 6 coins x
+{5m,15m}, Apr2-Jul7, book25+trades Up-only -> data/processed/daily/{coin}-{fam}/,
+coin Chainlink broadcasts -> data/processed/coin_prices/{sym}/, Binance 1s
+klines -> data/processed/binance/klines_1s_{SYM}/ (HYPE not on Binance spot
+— expected 404, coin gets no nowcast leg). Resumable via .mc_done_ markers.
+Plumbing DONE: consolidate/windows handle coin families ({coin}-5m etc.).
+
+WHEN BULK DONE (est. ~11h), in order:
+1. VERIFY resolution per coin: build_windows("{coin}-5m", [2 sample days])
+   reconciliation vs result_id using coin_prices feed (expect ~100%; loader
+   load_crypto_prices is btc-only — read data/processed/coin_prices/{sym}/
+   directly).
+2. VERIFY fees per coin: onchain_fills sample (2 markets/coin) implied r
+   (expect 0.07; add {coin}-5m/{coin}-15m regimes to configs/fee_regimes.json
+   — currently missing! fees.params will KeyError otherwise).
+3. RUN frozen machine per coin x fam: generalize src/oracle_hybrid.py run_day
+   (anchor = coin_prices server_ts; nowcast = klines_1s_{SYM} 1s closes;
+   frozen gates unchanged; book-walk 50 fills + top-of-book $5 check;
+   report BOTH with/without tape validation). Monthly tables Apr-Jul.
+4. AUDIT: ETH Jul 6 must reproduce ~4 trades/+$3.97 (inline test benchmark);
+   BTC pipeline sanity already reproduces. Spot-check 5 trades vs raw books.
+5. Judge honestly (frozen transfer, not mined). Then 3-month P&L projection
+   from $100 bankroll (stake=bankroll/20, min $5 PM order): use LATEST-month
+   per-coin rates, not averages; scenarios bear/base/bull; ladder mechanics.
+6. Appendix 11 + commit + report to user.

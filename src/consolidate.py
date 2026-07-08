@@ -30,14 +30,24 @@ import numpy as np
 import polars as pl
 
 NOTIONALS = (50.0, 200.0, 1000.0, 5000.0)
-FAMILY_RE = re.compile(r"^(btc-updown-(?:5m|15m|4h|1h))-(\d+)_(Up|Down)\.parquet$")
-DURATION = {"5m": 300, "15m": 900, "4h": 14400, "1h": 3600}
+FAMILY_RE = re.compile(r"^((?:btc|eth|sol|xrp|bnb|doge|hype)-updown-(?:5m|15m|4h|1h))-(\d+)_(Up|Down)\.parquet$")
+_BASE_DUR = {"5m": 300, "15m": 900, "4h": 14400, "1h": 3600}
+
+
+class _Dur(dict):
+    def __missing__(self, k):
+        return _BASE_DUR[k.rsplit("-", 1)[-1]]
+
+
+DURATION = _Dur(_BASE_DUR)
 GRID_US = 250_000  # 250ms book grid
 PRE_S, POST_S = 900, 30  # keep [wts-900, wts+dur+30]
 
 
 def _family_of(slug_prefix: str) -> str:
-    return slug_prefix.rsplit("-", 1)[-1]
+    coin, _, dur = slug_prefix.split("-", 2)
+    dur = dur.split("-")[-1]
+    return dur if coin == "btc" else f"{coin}-{dur}"
 
 
 def list_raw(channel: str, date: str) -> list[tuple[str, str, int, str]]:

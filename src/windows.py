@@ -19,8 +19,13 @@ import polars as pl
 sys.path.insert(0, "src")
 import loader
 
-FAMILY_DUR = {"5m": 300, "15m": 900, "1h": 3600, "4h": 14400}
-SLUG_PREFIX = {"5m": "btc-updown-5m", "15m": "btc-updown-15m", "4h": "btc-updown-4h"}
+FAMILY_DUR = {"5m": 300, "15m": 900, "1h": 3600, "4h": 14400,
+              **{f"{c}-{d}": v for c in ("eth", "sol", "xrp", "bnb", "doge", "hype")
+                 for d, v in (("5m", 300), ("15m", 900))}}
+SLUG_PREFIX = {"5m": "btc-updown-5m", "15m": "btc-updown-15m", "4h": "btc-updown-4h",
+               **{f"{c}-{d}": f"{c}-updown-{d}"
+                  for c in ("eth", "sol", "xrp", "bnb", "doge", "hype")
+                  for d in ("5m", "15m")}}
 MARKETS = "data/raw/telonex/polymarket_markets.parquet"
 
 
