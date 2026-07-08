@@ -286,3 +286,65 @@ edge is real, and prove it is not retail-replicable here.
 Final tally: **~15,500 simulated configs + direct P&L reconstruction of ~400k
 real wallets. Zero retail-replicable positive-EV strategies. The 3 genuinely
 profitable bots are beyond a $5/home-latency setup's reach.**
+
+---
+
+# REVISED VERDICT (2026-07-07, post-holdout): ONE survivor.
+
+## Appendix 6: the oracle-feed final-seconds trade — holdout-confirmed
+
+A user-provided transcript from a practitioner described a latency-arbitrage
+bot on 5m BTC markets: a private (direct, paid) Chainlink Data Streams feed vs
+Polymarket's delayed broadcast of the same feed, traded in the final seconds.
+Two elements were genuinely outside the prior 15,500-config search: decision
+times INSIDE the last 15 seconds (grid stopped at t+285s) and the ORACLE FEED
+ITSELF as the signal (grid used Binance).
+
+**Measured foundation:** Polymarket broadcasts Chainlink ticks with a median
+**1.14s delay** (p95 1.7s, n=2.6M ticks) — the "dislocation" is real.
+
+**Strategy (frozen config):** at t+297s (3s before close), compute z =
+log(chainlink_now/open) / (sigma*sqrt(3s)); if |z|>1.5 and fair(Phi(|z|)) −
+ask − fee > 2¢, taker-buy the predicted winner; hold ~3s to resolution.
+Fills tape-validated (a REAL print ≤ ask+1¢ must occur within 1.5s; fill at
+the worse of book ask / that print). Execution latency 250ms. $5/trade.
+
+**Development sample** (Apr 2–May 12, the only pre-holdout Chainlink era):
+n=1,228, +$1.41/trade, t=7.7, 86% wins. Look-ahead control passed (impossible
+2s-early feed explodes to 98% wins — simulator prices information timing
+honestly). Parameter plateau confirmed. Execution stress (anti-flicker,
+tape-validation) survived.
+
+**HOLDOUT (May 13–Jul 5, one shot, frozen):**
+- **Private-feed variant: PASS.** n=753, **+$0.32/trade, t=2.4** (bar: t≥2,
+  profitable), 81.5% wins, +$242 at $5 stakes over 54 days, 69% green days,
+  profitable in both halves ($69 then $173).
+- **Home variant (PM's own broadcast, no paid feed): FAIL.** −$0.25/trade,
+  t=−1.6. Its dev-sample edge (t=4.1) did not survive — already arbed away.
+
+*(Process note: a first holdout invocation returned zero trades due to a file
+path bug — no performance information was observed — so the corrected single
+run stands as the legitimate one-shot.)*
+
+**Honest deployment picture:**
+- The edge REQUIRES the direct Chainlink Data Streams subscription and
+  sub-300ms execution. Without it (broadcast version): negative.
+- **Alpha decayed 77%** from dev ($1.41/trade) to holdout ($0.32/trade),
+  consistent with the platform's own trajectory; this is a wasting asset.
+- Economics at holdout rates: ~14 trades/day; $5 stakes ≈ $4.5/day; $50
+  stakes ≈ $45/day (fills were priced at the $50 book-walk bucket, so this
+  scales validly); beyond that, final-seconds depth (Phase 1: halves in last
+  30s) caps size. Feed + VPS costs must clear ~$130/month before $50-stake
+  profits are net positive.
+- The practitioner's claimed +48–58%/day is NOT supported: measured edge is
+  ~6%/trade at ~14 trades/day pre-sizing; such days require aggressive Kelly
+  streaks and match the wallet-study's survivorship pattern (his "rinsed and
+  recycled" wallets, n=3-trade showcases). The MECHANISM, however, is real,
+  matches the 3 genuinely-edged wallets' profile (fast, late-window,
+  high-probability entries), and passed this project's full gauntlet.
+
+**Kill-switches if deployed (Phase 6 protocol):** rolling-100-trade win rate
+< 74% (holdout 5th-pct proxy), realized fill worse than tape-validated model
+by >1¢ average over 50 trades, broadcast-delay median < 400ms (Polymarket
+infrastructure upgrade = edge death), fee param change, or 10 consecutive
+red days → flatten and halt.
