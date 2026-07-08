@@ -432,3 +432,72 @@ definitive zero-cost test is live paper trading on free feeds (PM WSS
 crypto_prices + Binance WSS), Phase 6 protocol, $0 at risk: if two weeks of
 paper fills reproduce dev-like economics, deploy $5 stakes; if they reproduce
 Jul 6–7, the answer was already in this appendix.
+
+## Appendix 8: NIXULTIMATE — the crowd-reaction hypothesis space, fully measured (2026-07-08)
+
+**Brief:** find strategies that exploit Polymarket's human nature — odds driven
+by people's taker flow reacting to BTC — using the order book, game theory,
+limit orders, and position structure. Seven new families were built and run
+under full discipline (train <= Mar 19 / val Mar 20 - May 12 or fit/validate
+splits inside Apr 2 - May 12; strict trade-through maker fills; taker fees
+date-correct; thresholds from train quantiles only; Jul 6-7 kept virgin).
+
+**The families and what happened (M = 2,134 configs; deflated bar t >= 3.92):**
+
+| # | Family (archetype) | Configs | Best honest result | Verdict |
+|---|---|---|---|---|
+| N1 | Whipsaw straddle — resting bids BOTH sides at L, both-fill locks 1-2L fee-free | 42 | every config negative; val_t −5 to −17 | DEAD |
+| N4 | Panic-harvest — deep maker bids at mid−5/8/12c catching dumps; bracket variant locks 2k | 27 | all negative; best val_t +1.6 w/ negative train | DEAD |
+| N7a | Near-resolution maker at 97-99c, crowd-gated (no Chainlink) | 36 | all val_t <= 0.95 | DEAD |
+| N7b | Near-resolution maker, hybrid-nowcast-gated | 24 | SIGN FLIP: fit t −3.8, val t +6.0 — tail-risk clusters, unselectable | DEAD |
+| N6 | Cross-timeframe laggard — 15m repriced, 5m lags; maker toward implied fair | 96 | 0 configs positive in both splits at n>=300 | DEAD |
+| N5 | Model-quoting maker — hybrid fair − margin as resting quote mid-window | 108 | all negative at n>=300 | DEAD |
+| N2/N3 | Flow/depth grid — signed taker flow, whale flow, queue & 5c-depth imbalance, pre-open 45-55c band gated by positioning flow; follow AND fade; hold/maker exits | 1,800 | 0 configs with train_t>0 and val_t>=3; best val_t 1.08 | DEAD |
+| N8 | **nix1's frozen signal on the 15m market** (pre-registered transfer, not mined) | 1 | dev n=266, **+$2.11/trade, t=5.8, 88.7% wins**, $15.2/day, 70% green days | see below |
+
+**Mined survivors at the deflated bar: ZERO (0 / 2,133).**
+
+**Why every passive structure died — the game-theoretic core finding of this
+project:** Polymarket 5m/15m taker flow is INFORMED. The "panicking humans"
+are reacting to Binance, which leads everything; when they cross the spread
+into a resting order, they are right on average. Measured five independent
+ways: straddle single-fill win rates of 1-22%; panic-bid fill win rates
+36-43% (need ~50%+); model-quote fills stale by construction (the crosser
+has the newer Binance tick); near-resolution reversal clusters; and the
+on-chain ledger itself (5m-era makers net −$1.0M, Phase 1). The mirror
+finding: aggressive entries pay the fee wall (r=0.07 at p=0.5 ~ 1.75c/share)
+which absorbs the typical mid-window edge (15,500-config gauntlet, Phase 4).
+The market's design leaves exactly one profitable niche: faster information
+in the final seconds — the nix1 lineage.
+
+**N8, the one real discovery:** nix1's frozen config (unchanged: 3s before
+close, |z|>=1.5, EV margin 2c, tape-validated $50-bucket fills, $5 stakes)
+transplanted to the 15m market earned +$2.11/trade (t=5.8, 88.7% wins) over
+Apr 2 - May 12 — better per-trade than the 5m's $1.51, with a LOWER fee rate
+(0.0624). Caveats stated plainly: n=266 misses the pre-registered n>=300
+bar, and the profit again concentrates in the low-ask disagreement bucket
+(19% of trades, 69% wins, $357 of $562) which carries the documented
+Binance-Chainlink basis tail risk.
+
+**Frozen fresh-OOS one-shot (Jul 6-7, never touched by any fit): ZERO
+trades on both days.** Diagnosis: 79 and 74 windows z-qualified, but the 15m
+final-seconds books now sit at 99.5c+ (only 7 and 3 windows even quoted
+below 0.995; all but one EV-blocked). The same competition that compressed
+the 5m (Appendix 7) reached the 15m by July. In April both timeframes
+combined paid ~$36/day at $5 stakes; in July both gates read shut.
+
+**Verdict — everything on the table:**
+1. The crowd-reaction space (order-book imbalance, flow triggers, straddles,
+   panic harvesting, cross-timeframe lag, maker quoting): fully measured,
+   uniformly negative, mechanism understood. Not "we didn't find it" —
+   we measured WHY it isn't there.
+2. The only strategy class that ever worked on this data is the final-seconds
+   information trade (nix1 on 5m, N8 on 15m). It was genuinely profitable
+   on BOTH timeframes through mid-May and is fee-floor-dead on both as of
+   Jul 6-7.
+3. The edge is REGIME-DEPENDENT, not gone forever: it exists whenever
+   final-seconds books leave >2c after fees — a state that reopens when
+   competitors lapse, volatility spikes, or new market families launch.
+   The zero-cost play: a live paper bot on free feeds watching BOTH
+   families' EV gates in real time, trading only when a gate opens.
+   That is the deployable NIXULTIMATE: nix1 + N8 + a gate monitor.

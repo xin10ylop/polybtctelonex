@@ -18,14 +18,28 @@ uses only genuinely fresh post-2026-07-05 days.
   10/13 EV-starved at 93-99c). Two-day fresh-OOS: ~$0.80/day at $5 stakes vs
   dev $20.9/day — signal alive, payment competed to the fee floor.
 
-On "continue": Appendix 7 is final. To extend fresh-OOS by another day D:
+**NIXULTIMATE pass (Appendix 8, 2026-07-08):** 7 new game-theory families
+(straddle, panic-harvest maker, near-resolution maker pm/hyb-gated,
+cross-timeframe laggard maker, model-quoting maker, flow/depth grid incl.
+pre-open flow triggers) = 2,133 mined configs, deflated bar 3.92, ZERO
+survivors. Core finding: taker flow is informed (Binance-led) -> every
+passive structure adversely selected; aggressive pays the fee wall. N8 =
+nix1's frozen config transplanted to 15m (pre-registered, not mined): dev
+n=266 +$2.11/trade t=5.8 (misses n>=300 bar), fresh-OOS Jul 6-7 ZERO trades
+(15m final-seconds books now 99.5c+, same competition as 5m). Sims:
+src/nix_{straddle,panic,near,xtf_maker,quote,grid,flow_cols,judge}.py,
+src/nix_15m_lastsec.py; results/nix_*.parquet.
+
+On "continue": Appendices 7-8 are final. To extend fresh-OOS by another day D:
 fetch Binance (bulk_binance.do_klines/do_aggtrades), process_day(D, rm_raw=True),
 refresh markets metadata (`curl -sSL
 https://api.telonex.io/v1/datasets/polymarket/markets -o
 data/raw/telonex/polymarket_markets.parquet`), then
-`.venv/bin/python src/oracle_hybrid.py D --diagnose`. Next decision point: user
-chooses whether to build the Phase 6 live paper-trading bot (free feeds, $0
-risk, kill switches per report).
+`.venv/bin/python src/oracle_hybrid.py D --diagnose` (5m) and
+`.venv/bin/python src/nix_15m_lastsec.py D` (15m). Next decision point: user
+chooses whether to build the Phase 6 live paper bot (free feeds, $0 risk):
+nix1 + N8 signals with a real-time EV-gate monitor on both families —
+trades only when final-seconds books leave >2c after fees again.
 
 ## Environment facts (verified)
 
