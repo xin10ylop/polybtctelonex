@@ -588,3 +588,18 @@ EV-only lottery variant: one $495 December win, statistically nothing.
 was worth $40+/day as recently as May, and is at or below the fee floor
 everywhere as of July. Deployment decisions must use these numbers, not
 the historical averages.**
+
+### Appendix 10 addendum: the crossed-book "pure arbitrage" check (2026-07-09)
+
+The last untested archetype from the user's research (Up+Down < $1). On
+mirror-consistent books this requires a crossed BBO (bid > ask). Scan across
+5m/15m/1h: crossed states appear in 1-3% of BBO rows but are transient
+(median life ~0ms). Filtering to executable events (>=250ms life, >5 shares
+both sides, net of fees positive): 5m zero everywhere; 15m/1h show hundreds
+per day ONLY on 2026-01-15 — inside the documented pre-Jan-19 collector-gap
+era — and 0-2/day in the clean era, none confirmed by trade prints inside
+the crossed interval. Verdict: data artifacts, not arbitrage. With this,
+all six archetypes of the published bot taxonomy are tested on this data:
+two are the real edge we already built (repricing + near-resolution = nix1
+lineage), four are measured dead, and the ledger (Appendix 5) shows who
+actually gets paid: the 3 fastest wallets out of 12,379.
