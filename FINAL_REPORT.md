@@ -237,3 +237,52 @@ entry.
 Final totals: **~15,500 configurations across entries, directions, ML/no-ML,
 timeframes, fill assumptions, sizings, and now exit/stop-loss rules. Zero
 survivors.**
+
+## Appendix 5: reverse-engineering the REAL profitable bots (2026-07-07)
+
+The user's strongest point: "consistent profitable bots exist, this isn't luck."
+Correct — so instead of simulating more strategies, every wallet's realized P&L
+was reconstructed directly from on-chain fills (train+val 5m, outcome + fill
+price + amount + fee, ground-truth accounting; maker P&L incl. ~20% rebate).
+
+**What's real:**
+- ~400k wallets traded; 12,379 taker wallets had ≥300 fills over ≥20 days.
+- Top consistent taker: **+$2,970 over 51 days, 84% green days, daily
+  Sharpe 0.93 (t≈6.6)**. Top maker bot: **+$151k over 62 days, 3.2M fills.**
+  These are unambiguously real, profitable, non-luck operations.
+
+**But how many are genuinely edged vs survivorship?** A null model (each
+wallet's own daily P&L magnitudes, signs randomized = zero-edge coin-flip):
+- "Consistent winners" (Sharpe≥0.3, >55% green days, P&L>0): **703 real vs
+  571±22 expected by pure luck.** So ~570 of the 703 are survivorship — lucky
+  coin-flippers over a few weeks — and only a ~130 excess carries any real edge.
+- Wallets exceeding the rigorous multiple-testing skill bar (t > √(2 ln N) =
+  4.34): **exactly 3 of 12,379.** Max t-stat 6.67. Three genuinely-edged
+  taker bots in the entire market, plus a handful of large MM operations.
+
+**What the genuine winners actually do (profiled):**
+- Their edge is **NOT home-latency arbitrage**: Binance price moves in the
+  ~1s around their fills are ≈0.1 bps — they are not front-running Binance
+  faster than 250ms. So the edge is not raw speed on the signal I measured.
+- Their edge is **NOT any rule in this study's feature set**: 15,500 configs
+  with those exact features + ML + walk-forward found no replicable positive-EV
+  rule. If the winners' edge were a Telonex-observable signal at home latency,
+  the search would have caught it.
+- The top wallets do NOT concentrate at 50¢: winners trade 30% coin-flip / 27%
+  cheap-tail / 43% mid — barely different from losers. There is no "trade at
+  48–52¢ and win" pattern; that price region is where the 6,099 LOSING takers
+  concentrate.
+
+**Conclusion.** Consistent profitable bots are real but vanishingly rare (≈3
+genuinely-edged takers + a few pro market-makers per ~400k wallets), and their
+edge lives in places a $5 home bot cannot reach: sub-100ms colocated execution
+against the stable 1.25s oracle lag *with size*, or professional two-sided
+market-making harvesting maker rebates + liquidity rewards (the $151k maker),
+or private order flow — none of it the "buy Up/Down near 50¢, rest a limit
+sell" strategy, which sits squarely in the losing majority. The user's premise
+was right and its implication is the opposite of hoped: the winners prove the
+edge is real, and prove it is not retail-replicable here.
+
+Final tally: **~15,500 simulated configs + direct P&L reconstruction of ~400k
+real wallets. Zero retail-replicable positive-EV strategies. The 3 genuinely
+profitable bots are beyond a $5/home-latency setup's reach.**
