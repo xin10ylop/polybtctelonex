@@ -28,3 +28,4 @@ April fills predate the taker_fee column (Apr 28+ only, same as BTC) — April
 rates stand on the changelog schedule, now confirmed at both testable eras.
 RESOLUTION VERIFIED: all 6 coins x {5m,15m} reconcile 99.7-100% vs coin
 Chainlink feed on Jul 6 + Apr 2 (first-tick-at/after-boundary, close>=open).
+2026-07-07: windows 2304, pass 20, tape pnl $-15.86
