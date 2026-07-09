@@ -124,3 +124,5 @@ RESCHECK hype-5m 2026-04-02: 287/287 = 100.0%
 RESCHECK hype-15m 2026-04-02: 95/95 = 100.0%
 2026-04-02: windows 2304, pass 63, tape pnl $-7.99
 2026-04-03: windows 2304, pass 82, tape pnl $-38.94
+2026-04-04: windows 2304, pass 107, tape pnl $-13.20
+2026-04-05: windows 2304, pass 73, tape pnl $+0.69
