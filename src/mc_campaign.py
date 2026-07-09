@@ -102,7 +102,7 @@ EV_MARGIN = 0.02
 BLAT = 150_000
 FILL_LAT = 250_000
 STAKE = 5.0
-PUSH_EVERY = 2
+PUSH_EVERY = 1  # push each day: rollbacks are frequent, minimize re-work
 
 
 def sh(cmd: str) -> int:
