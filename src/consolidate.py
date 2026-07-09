@@ -159,7 +159,10 @@ def _walk_curves(prices: np.ndarray, sizes: np.ndarray, notionals=NOTIONALS):
     return out
 
 
-def consolidate_books(date: str) -> None:
+def consolidate_books(date: str, final_only: int | None = None) -> None:
+    """final_only=N keeps only the last N seconds before each window's close
+    (plus POST_S after) — 30-60x less curve-walk work when downstream only
+    reads final-seconds book state (the streaming multicoin campaign)."""
     by_family: dict[str, list[pl.DataFrame]] = {}
     bid_p = [f"bid_price_{i}" for i in range(25)]
     bid_s = [f"bid_size_{i}" for i in range(25)]
@@ -169,7 +172,8 @@ def consolidate_books(date: str) -> None:
         if outcome != "Up":
             continue
         dur = DURATION[family]
-        lo = (wts - PRE_S) * 1_000_000
+        lo = ((wts + dur - final_only) if final_only
+              else (wts - PRE_S)) * 1_000_000
         hi = (wts + dur + POST_S) * 1_000_000
         df = (
             pl.read_parquet(path)

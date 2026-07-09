@@ -43,3 +43,11 @@ RESCHECK hype-5m 2026-04-02: 287/287 = 100.0%
 RESCHECK hype-15m 2026-04-02: 95/95 = 100.0%
 2026-04-02: windows 2304, pass 72, tape pnl $-20.61
 2026-04-03: windows 2304, pass 88, tape pnl $-62.26
+SPEEDUP (2026-07-09 11:2x): consolidation was the bottleneck (~15-18 min/day
+-> ~26h campaign under rollback risk). consolidate_books gained final_only=N:
+campaign now walks curves only over the last 30s before close (+30s after) —
+the machine reads books solely in the final 3s. ~30-44x less walk work.
+Semantic note: books resting unchanged for >30s before close now read
+"nobook" instead of filling against the stale-but-live row; bias is AGAINST
+edge (conservative) and measurable via gate=nobook counts (Jul6/Jul7/Apr2
+were processed under FULL consolidation for comparison).

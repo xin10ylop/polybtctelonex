@@ -313,7 +313,7 @@ def process_day(date: str, subs: dict) -> bool:
         note(f"{date}: {len(err)} download errors, skipping day ({err[0].detail})")
         return False
     consolidate.consolidate_trades(date)
-    consolidate.consolidate_books(date)
+    consolidate.consolidate_books(date, final_only=30)
     for ch in ("book_snapshot_25", "trades"):
         shutil.rmtree(f"data/raw/telonex/{ch}/{date}", ignore_errors=True)
     all_rows = []
