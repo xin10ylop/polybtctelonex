@@ -260,14 +260,18 @@ def feecheck(date: str, meta_by: dict) -> None:
         for p in glob.glob(f"data/raw/telonex/fees_tmp/{coin}_*.parquet"):
             try:
                 f = pl.read_parquet(p)
-                f = f.with_columns(pl.col("taker_fee").cast(pl.Float64, strict=False)
-                                   .fill_null(0.0))
+                if "taker_fee" not in f.columns:   # column exists only Apr28+
+                    continue
+                f = f.with_columns(
+                    pl.col("price").cast(pl.Float64, strict=False),
+                    pl.col("amount").cast(pl.Float64, strict=False),
+                    pl.col("taker_fee").cast(pl.Float64, strict=False).fill_null(0.0))
                 f = f.filter((pl.col("taker_fee") > 0) & (pl.col("price") > 0.03)
-                             & (pl.col("price") < 0.97))
+                             & (pl.col("price") < 0.97) & (pl.col("amount") > 0))
                 if f.is_empty():
                     continue
                 r = (f["taker_fee"] /
-                     (f["size"] * f["price"] * (1 - f["price"]))).median()
+                     (f["amount"] * f["price"] * (1 - f["price"]))).median()
                 if r is not None:
                     rs.append(float(r))
             except Exception:
