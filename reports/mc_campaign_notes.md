@@ -57,3 +57,5 @@ were processed under FULL consolidation for comparison).
 2026-04-07: windows 2304, pass 47, tape pnl $-7.93
 2026-04-08: windows 2304, pass 74, tape pnl $+0.62
 2026-04-09: windows 2304, pass 68, tape pnl $-11.12
+2026-04-10: windows 2304, pass 95, tape pnl $+15.19
+2026-04-11: windows 2304, pass 107, tape pnl $-21.58
