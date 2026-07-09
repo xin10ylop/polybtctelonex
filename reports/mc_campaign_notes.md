@@ -29,3 +29,16 @@ rates stand on the changelog schedule, now confirmed at both testable eras.
 RESOLUTION VERIFIED: all 6 coins x {5m,15m} reconcile 99.7-100% vs coin
 Chainlink feed on Jul 6 + Apr 2 (first-tick-at/after-boundary, close>=open).
 2026-07-07: windows 2304, pass 20, tape pnl $-15.86
+RESCHECK eth-5m 2026-04-02: 287/287 = 100.0%
+RESCHECK eth-15m 2026-04-02: 95/95 = 100.0%
+RESCHECK sol-5m 2026-04-02: 287/287 = 100.0%
+RESCHECK sol-15m 2026-04-02: 95/95 = 100.0%
+RESCHECK xrp-5m 2026-04-02: 287/287 = 100.0%
+RESCHECK xrp-15m 2026-04-02: 95/95 = 100.0%
+RESCHECK bnb-5m 2026-04-02: 287/287 = 100.0%
+RESCHECK bnb-15m 2026-04-02: 95/95 = 100.0%
+RESCHECK doge-5m 2026-04-02: 287/287 = 100.0%
+RESCHECK doge-15m 2026-04-02: 95/95 = 100.0%
+RESCHECK hype-5m 2026-04-02: 287/287 = 100.0%
+RESCHECK hype-15m 2026-04-02: 95/95 = 100.0%
+2026-04-02: windows 2304, pass 72, tape pnl $-20.61
