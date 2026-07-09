@@ -59,3 +59,16 @@ were processed under FULL consolidation for comparison).
 2026-04-09: windows 2304, pass 68, tape pnl $-11.12
 2026-04-10: windows 2304, pass 95, tape pnl $+15.19
 2026-04-11: windows 2304, pass 107, tape pnl $-21.58
+2026-04-12: windows 2304, pass 99, tape pnl $-60.30
+FROZEN STACK PRE-REGISTRATION (2026-07-09 ~11:50 UTC, days Apr2-11 + Jul6-7
+seen; Apr12-Jul5 UNSEEN): deployment stack = frozen machine + basis guard
+(ask<0.50 & |basis|>5bp, from bot/config.json, BTC-era) + CALIBRATED EV gate
+(bot/calibration.json: realized wr vs |z| fitted on BTC dev trades n=1397,
+replaces Phi(z); same 2c margin). Root cause documented: Phi(z) says 0.99-1.00
+where realized wr is 0.62-0.83 (all coins, 736 trades) — signal direction is
+fine, confidence was inflated; BTC masked it with 83c books, coin books at
+90-95c expose it. Peeked-days effect: raw 736tr/-$81.05 -> stack 190tr/-$18.09
+(tape fills, conservative mirror convention). DEPLOY BAR (Rule 4): the stack
+must be significantly positive on the UNSEEN Apr12-Jul5 days (both fill
+conventions reported; tob-$5 variant bracketed) or the verdict is NO DEPLOY.
+No further overlay variants will be evaluated pre-judgment.

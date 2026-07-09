@@ -1,0 +1,41 @@
+{
+ "comment": "calibrated win-prob vs |z|, fitted on BTC dev trades (oracle_hybrid_dev n=1131 + nix_15m dev n=266) 2026-07-09; FROZEN before coin campaign months Jun+ were seen; replaces Phi(z) in the EV gate",
+ "bins": [
+  {
+   "z_lo": 1.5,
+   "z_hi": 2.0,
+   "n": 124,
+   "wr": 0.7581
+  },
+  {
+   "z_lo": 2.0,
+   "z_hi": 2.5,
+   "n": 134,
+   "wr": 0.8358
+  },
+  {
+   "z_lo": 2.5,
+   "z_hi": 3.0,
+   "n": 128,
+   "wr": 0.8286
+  },
+  {
+   "z_lo": 3.0,
+   "z_hi": 4.0,
+   "n": 193,
+   "wr": 0.8286
+  },
+  {
+   "z_lo": 4.0,
+   "z_hi": 6.0,
+   "n": 258,
+   "wr": 0.8411
+  },
+  {
+   "z_lo": 6.0,
+   "z_hi": 1000000000.0,
+   "n": 560,
+   "wr": 0.9
+  }
+ ]
+}
