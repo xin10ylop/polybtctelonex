@@ -72,3 +72,4 @@ fine, confidence was inflated; BTC masked it with 83c books, coin books at
 must be significantly positive on the UNSEEN Apr12-Jul5 days (both fill
 conventions reported; tob-$5 variant bracketed) or the verdict is NO DEPLOY.
 No further overlay variants will be evaluated pre-judgment.
+2026-04-13: windows 2304, pass 63, tape pnl $+58.04
