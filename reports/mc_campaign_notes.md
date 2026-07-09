@@ -182,3 +182,4 @@ trade on stale data. HYPE rows stripped from the 7 already-computed tick days
 2026-05-23: windows 1920, pass 35, tape pnl $-13.31
 2026-05-24: windows 1920, pass 32, tape pnl $-17.73
 2026-05-25: windows 1920, pass 22, tape pnl $-24.72
+2026-05-26: windows 1910, pass 18, tape pnl $-5.57
