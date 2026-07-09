@@ -135,3 +135,5 @@ trade on stale data. HYPE rows stripped from the 7 already-computed tick days
 (16128->13440 rows). Deployable coin set = ETH, SOL, XRP, BNB, DOGE.
 2026-04-07: windows 1920, pass 29, tape pnl $-5.66
 2026-04-08: windows 1920, pass 47, tape pnl $+4.58
+2026-04-09: windows 1920, pass 55, tape pnl $+11.11
+2026-04-10: windows 1920, pass 76, tape pnl $+7.22
