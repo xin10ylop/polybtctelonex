@@ -109,3 +109,4 @@ and ONE new -$5.30 eth loser at wts=1783316400 = the SAME 05:40 UTC Jul 6
 cross-venue basis event as BTC's documented blowup (ask ~0.6 > guard's 0.50
 floor, so not blocked). No bug; klines-tuned audit band superseded. Judgment
 uses the full tick-run sample.
+2026-07-07: windows 2304, pass 23, tape pnl $-11.68
