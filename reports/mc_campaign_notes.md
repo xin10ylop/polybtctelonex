@@ -126,3 +126,10 @@ RESCHECK hype-15m 2026-04-02: 95/95 = 100.0%
 2026-04-03: windows 2304, pass 82, tape pnl $-38.94
 2026-04-04: windows 2304, pass 107, tape pnl $-13.20
 2026-04-05: windows 2304, pass 73, tape pnl $+0.69
+2026-04-06: windows 2304, pass 40, tape pnl $-16.36
+COIN SET FINALIZED (2026-07-09, user directive): exclude any coin without a
+150ms tick feed. HYPE dropped entirely (not on Binance spot -> anchor-only,
+measured negative like BTC broadcast-only). Tick coins with an aggTrades gap
+on a given day now SKIP that coin-day (no 1s-klines fallback) rather than
+trade on stale data. HYPE rows stripped from the 7 already-computed tick days
+(16128->13440 rows). Deployable coin set = ETH, SOL, XRP, BNB, DOGE.

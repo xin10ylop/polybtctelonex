@@ -88,7 +88,9 @@ def load_ticks(sym: str, date: str):
         ts = ts * 1000
     return ts, np.log(t["price"].to_numpy().astype(np.float64))
 
-COINS = ["eth", "sol", "xrp", "bnb", "doge", "hype"]
+# HYPE excluded (user, 2026-07-09): not on Binance spot -> no 150ms tick feed,
+# so it can only run anchor-only (measured negative, like BTC broadcast-only).
+COINS = ["eth", "sol", "xrp", "bnb", "doge"]
 FAMS = [("5m", 300), ("15m", 900)]
 DATES = (["2026-07-06", "2026-07-07"] +
          [(dt.date(2026, 4, 2) + dt.timedelta(days=i)).isoformat()
@@ -370,14 +372,11 @@ def process_day(date: str, subs: dict) -> bool:
         cp = pl.read_parquet(cpp).sort("timestamp_us")
         if cp.is_empty():
             continue
-        if coin == "hype":
-            bt, blog = None, None            # no Binance listing: anchor-only
-        else:
-            sym = (coin + "usdt").upper()
-            bt, blog = load_ticks(sym, date)   # tick-level (A/B-validated)
-            if bt is None:                     # fallback: 1s klines
-                binance_klines(sym, date)
-                bt, blog = load_klines(sym, date)
+        sym = (coin + "usdt").upper()
+        bt, blog = load_ticks(sym, date)       # tick-level (A/B-validated)
+        if bt is None:                         # no 150ms ticks -> skip this
+            note(f"{date} {coin}: no aggTrades ticks, coin SKIPPED (no candle fallback)")
+            continue
         for fam, dur in FAMS:
             meta = meta_by.get((coin, fam))
             if meta is None or meta.is_empty():
