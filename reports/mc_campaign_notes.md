@@ -42,3 +42,4 @@ RESCHECK doge-15m 2026-04-02: 95/95 = 100.0%
 RESCHECK hype-5m 2026-04-02: 287/287 = 100.0%
 RESCHECK hype-15m 2026-04-02: 95/95 = 100.0%
 2026-04-02: windows 2304, pass 72, tape pnl $-20.61
+2026-04-03: windows 2304, pass 88, tape pnl $-62.26
