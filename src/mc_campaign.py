@@ -388,7 +388,16 @@ def process_day(date: str, subs: dict) -> bool:
         feecheck(date, meta_by)
     os.makedirs("results/mc", exist_ok=True)
     if all_rows:
-        pl.DataFrame(all_rows).write_parquet(out, compression="zstd")
+        # explicit schema: many fields are null for early/skipped rows, so
+        # letting polars infer from the first rows mistypes them (crash on a
+        # later float). Pin every field's dtype.
+        schema = {"date": pl.String, "coin": pl.String, "fam": pl.String,
+                  "wts": pl.Int64, "up_won": pl.Boolean, "z": pl.Float64,
+                  "fair": pl.Float64, "ask": pl.Float64, "wask": pl.Float64,
+                  "ev": pl.Float64, "basis_bp": pl.Float64, "tob_ask": pl.Float64,
+                  "tob_usd": pl.Float64, "gate": pl.String, "fill": pl.Float64,
+                  "pnl": pl.Float64, "fill_tape": pl.Float64, "pnl_tape": pl.Float64}
+        pl.DataFrame(all_rows, schema=schema).write_parquet(out, compression="zstd")
     else:
         pl.DataFrame({"date": [date]}).write_parquet(out)
     # cleanup the day's consolidated coin data (results are the durable record)
