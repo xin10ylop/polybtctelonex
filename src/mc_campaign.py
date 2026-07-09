@@ -43,6 +43,51 @@ import fees
 import telonex_dl as tdl
 from multicoin_bulk import binance_klines
 
+
+def binance_aggtrades(sym: str, date: str) -> str | None:
+    """Tick-level nowcast feed (A/B test: candles cost the brain ~1/3 of its
+    edge on BTC — the live bot trades on ticks, so the sim must too).
+    Downloaded per day, DELETED by process_day cleanup (too big to keep)."""
+    import io
+    import urllib.request
+    import zipfile
+    out = f"data/processed/binance/aggTrades_{sym}/{date}.parquet"
+    if os.path.exists(out):
+        return out
+    url = (f"https://data.binance.vision/data/spot/daily/aggTrades/{sym}/"
+           f"{sym}-aggTrades-{date}.zip")
+    for attempt in range(4):
+        try:
+            with urllib.request.urlopen(url, timeout=180) as r:
+                z = zipfile.ZipFile(io.BytesIO(r.read()))
+                raw = z.read(z.namelist()[0])
+            break
+        except Exception as e:
+            if getattr(e, "code", None) == 404:
+                return None
+            time.sleep(2 ** attempt)
+    else:
+        return None
+    cols = ["agg_id", "price", "qty", "first_id", "last_id", "ts_us",
+            "is_buyer_maker", "best_match"]
+    df = pl.read_csv(io.BytesIO(raw), has_header=False, new_columns=cols)
+    os.makedirs(os.path.dirname(out), exist_ok=True)
+    (df.select(pl.col("ts_us").cast(pl.Int64),
+               pl.col("price").cast(pl.Float64))
+       .write_parquet(out, compression="zstd"))
+    return out
+
+
+def load_ticks(sym: str, date: str):
+    p = binance_aggtrades(sym, date)
+    if p is None:
+        return None, None
+    t = pl.read_parquet(p).sort("ts_us")
+    ts = t["ts_us"].to_numpy().astype(np.int64)
+    if len(ts) and ts.max() < 2_000_000_000_000:   # ms epoch -> us
+        ts = ts * 1000
+    return ts, np.log(t["price"].to_numpy().astype(np.float64))
+
 COINS = ["eth", "sol", "xrp", "bnb", "doge", "hype"]
 FAMS = [("5m", 300), ("15m", 900)]
 DATES = (["2026-07-06", "2026-07-07"] +
@@ -325,11 +370,14 @@ def process_day(date: str, subs: dict) -> bool:
         cp = pl.read_parquet(cpp).sort("timestamp_us")
         if cp.is_empty():
             continue
-        bt, blog = (None, None) if coin == "hype" else \
-            load_klines((coin + "usdt").upper(), date)
-        if coin != "hype" and bt is None:
-            binance_klines((coin + "usdt").upper(), date)
-            bt, blog = load_klines((coin + "usdt").upper(), date)
+        if coin == "hype":
+            bt, blog = None, None            # no Binance listing: anchor-only
+        else:
+            sym = (coin + "usdt").upper()
+            bt, blog = load_ticks(sym, date)   # tick-level (A/B-validated)
+            if bt is None:                     # fallback: 1s klines
+                binance_klines(sym, date)
+                bt, blog = load_klines(sym, date)
         for fam, dur in FAMS:
             meta = meta_by.get((coin, fam))
             if meta is None or meta.is_empty():
@@ -351,6 +399,9 @@ def process_day(date: str, subs: dict) -> bool:
                 p = f"data/processed/daily/{coin}-{fam}/{ch}/{date}.parquet"
                 if os.path.exists(p):
                     os.remove(p)
+        p = f"data/processed/binance/aggTrades_{(coin + 'usdt').upper()}/{date}.parquet"
+        if os.path.exists(p):
+            os.remove(p)                      # ~40MB/coin-day: too big to keep
     tr_rows = [r for r in all_rows if r["gate"] == "pass"]
     tape_pnl = sum(r["pnl_tape"] for r in tr_rows if r["pnl_tape"] is not None)
     note(f"{date}: windows {len(all_rows)}, pass {len(tr_rows)}, "

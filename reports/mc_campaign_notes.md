@@ -76,3 +76,11 @@ No further overlay variants will be evaluated pre-judgment.
 2026-04-14: windows 2304, pass 54, tape pnl $-10.21
 2026-04-15: windows 2292, pass 50, tape pnl $+9.25
 2026-04-16: windows 2288, pass 58, tape pnl $-1.39
+FEED FIDELITY UPGRADE (2026-07-09 ~12:1x): A/B on BTC dev (41 days, frozen
+machine): aggTrades nowcast +$1.51/tr t=7.6 wr84.6% vs 1s-klines nowcast
++$1.04/tr t=4.9 wr80.6% — candles cost ~1/3 of the edge. The live bot reads
+tick WSS, so the sim must too (fidelity fix, NOT a parameter change; frozen
+stack + deploy bar unchanged). Campaign restarted with tick nowcast for
+eth/sol/xrp/bnb/doge (HYPE unchanged, anchor-only). Klines-variant run of the
+first 16 days preserved at results/mc_klines/ for the record. aggTrades
+parquets deleted per-day after use (disk).
