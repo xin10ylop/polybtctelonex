@@ -75,3 +75,4 @@ No further overlay variants will be evaluated pre-judgment.
 2026-04-13: windows 2304, pass 63, tape pnl $+58.04
 2026-04-14: windows 2304, pass 54, tape pnl $-10.21
 2026-04-15: windows 2292, pass 50, tape pnl $+9.25
+2026-04-16: windows 2288, pass 58, tape pnl $-1.39
