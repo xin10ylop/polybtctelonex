@@ -51,3 +51,5 @@ Semantic note: books resting unchanged for >30s before close now read
 "nobook" instead of filling against the stale-but-live row; bias is AGAINST
 edge (conservative) and measurable via gate=nobook counts (Jul6/Jul7/Apr2
 were processed under FULL consolidation for comparison).
+2026-04-04: windows 2304, pass 124, tape pnl $-52.23
+2026-04-05: windows 2304, pass 93, tape pnl $+72.10
