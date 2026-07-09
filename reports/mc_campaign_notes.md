@@ -110,3 +110,17 @@ cross-venue basis event as BTC's documented blowup (ask ~0.6 > guard's 0.50
 floor, so not blocked). No bug; klines-tuned audit band superseded. Judgment
 uses the full tick-run sample.
 2026-07-07: windows 2304, pass 23, tape pnl $-11.68
+RESCHECK eth-5m 2026-04-02: 287/287 = 100.0%
+RESCHECK eth-15m 2026-04-02: 95/95 = 100.0%
+RESCHECK sol-5m 2026-04-02: 287/287 = 100.0%
+RESCHECK sol-15m 2026-04-02: 95/95 = 100.0%
+RESCHECK xrp-5m 2026-04-02: 287/287 = 100.0%
+RESCHECK xrp-15m 2026-04-02: 95/95 = 100.0%
+RESCHECK bnb-5m 2026-04-02: 287/287 = 100.0%
+RESCHECK bnb-15m 2026-04-02: 95/95 = 100.0%
+RESCHECK doge-5m 2026-04-02: 287/287 = 100.0%
+RESCHECK doge-15m 2026-04-02: 95/95 = 100.0%
+RESCHECK hype-5m 2026-04-02: 287/287 = 100.0%
+RESCHECK hype-15m 2026-04-02: 95/95 = 100.0%
+2026-04-02: windows 2304, pass 63, tape pnl $-7.99
+2026-04-03: windows 2304, pass 82, tape pnl $-38.94
