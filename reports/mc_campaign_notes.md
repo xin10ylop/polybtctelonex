@@ -84,3 +84,28 @@ stack + deploy bar unchanged). Campaign restarted with tick nowcast for
 eth/sol/xrp/bnb/doge (HYPE unchanged, anchor-only). Klines-variant run of the
 first 16 days preserved at results/mc_klines/ for the record. aggTrades
 parquets deleted per-day after use (disk).
+RESCHECK eth-5m 2026-07-06: 287/287 = 100.0%
+RESCHECK eth-15m 2026-07-06: 95/95 = 100.0%
+RESCHECK sol-5m 2026-07-06: 287/287 = 100.0%
+RESCHECK sol-15m 2026-07-06: 95/95 = 100.0%
+RESCHECK xrp-5m 2026-07-06: 286/287 = 99.7%
+RESCHECK xrp-15m 2026-07-06: 95/95 = 100.0%
+RESCHECK bnb-5m 2026-07-06: 286/287 = 99.7%
+RESCHECK bnb-15m 2026-07-06: 95/95 = 100.0%
+RESCHECK doge-5m 2026-07-06: 287/287 = 100.0%
+RESCHECK doge-15m 2026-07-06: 95/95 = 100.0%
+RESCHECK hype-5m 2026-07-06: 287/287 = 100.0%
+RESCHECK hype-15m 2026-07-06: 95/95 = 100.0%
+FEECHECK eth-5m 2026-07-06: implied r=0.0700 regime=0.07 OK
+FEECHECK sol-5m 2026-07-06: implied r=0.0700 regime=0.07 OK
+2026-07-06: windows 2304, pass 29, tape pnl $-3.19
+AUDIT eth-5m Jul6: 3 tape trades $-4.45 (benchmark ~4/+$3.97) -> FAIL — INVESTIGATE
+TICK-RUN AUDIT RESOLVED (2026-07-09 12:2x): Jul6 tick vs klines window-level:
+corr(z)=1.000, sign agree 99.8% over 1117 windows -> feed parsing verified.
+Day-level delta (-$3.19 vs +$6.21) fully attributed: marginal |z|~1.5-2
+boundary flips (tick brain fresher — correctly skipped a retraced klines
+'winner'), BNB nofeed on real tick gaps (frozen construction requires b2>b1),
+and ONE new -$5.30 eth loser at wts=1783316400 = the SAME 05:40 UTC Jul 6
+cross-venue basis event as BTC's documented blowup (ask ~0.6 > guard's 0.50
+floor, so not blocked). No bug; klines-tuned audit band superseded. Judgment
+uses the full tick-run sample.
