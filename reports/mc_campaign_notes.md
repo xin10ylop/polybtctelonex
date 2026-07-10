@@ -243,3 +243,4 @@ nothing pre-open in Phase 3). The 10s stop makes it WORSE (-$0.80 vs -$0.51):
 2026-06-23: windows 1920, pass 33, tape pnl $-3.94
 2026-06-24: windows 1920, pass 49, tape pnl $+12.33
 2026-06-25: windows 1920, pass 35, tape pnl $+3.56
+2026-06-26: windows 1920, pass 14, tape pnl $-7.75
