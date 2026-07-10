@@ -222,3 +222,4 @@ FAILING unless Jun12-Jul5 reverses. Judgment must use bucket-level lens.
 FEECHECK eth-5m 2026-06-15: implied r=0.0700 regime=0.07 OK
 FEECHECK sol-5m 2026-06-15: implied r=0.0700 regime=0.07 OK
 2026-06-15: windows 1920, pass 18, tape pnl $+2.34
+2026-06-16: windows 1920, pass 20, tape pnl $+3.38
