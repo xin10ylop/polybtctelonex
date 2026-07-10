@@ -228,3 +228,4 @@ FEECHECK sol-5m 2026-06-15: implied r=0.0700 regime=0.07 OK
 2026-06-18: windows 1920, pass 14, tape pnl $-15.28
 2026-06-19: windows 1920, pass 25, tape pnl $-9.67
 2026-06-20: windows 1915, pass 25, tape pnl $-18.02
+2026-06-21: windows 1920, pass 36, tape pnl $+24.48
