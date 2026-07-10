@@ -218,3 +218,4 @@ Jul -$17/day. BTC-fit calibration does NOT transfer (top-bin 0.90 vs realized
 49-85% bucket-dependent). Deploy bar (clearly positive on recent months) is
 FAILING unless Jun12-Jul5 reverses. Judgment must use bucket-level lens.
 2026-06-13: windows 1920, pass 69, tape pnl $-67.26
+2026-06-14: windows 1920, pass 51, tape pnl $-20.96
