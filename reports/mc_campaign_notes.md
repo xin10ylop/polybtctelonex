@@ -200,3 +200,20 @@ trade on stale data. HYPE rows stripped from the 7 already-computed tick days
 2026-06-10: windows 1920, pass 9, tape pnl $-4.26
 2026-06-11: windows 1920, pass 5, tape pnl $+2.09
 2026-06-12: windows 1920, pass 30, tape pnl $-23.63
+"SOMETHING OFF" INVESTIGATION RESOLVED (2026-07-10, user-prompted). Three findings:
+(1) Earlier "June books tightened" claim WRONG — winner-ask median flat 0.98 all
+months. (2) The floor-fill June collapse (~1 trade/day) is a FILL-CONVENTION
+ARTIFACT: noask rose (thin books make $50-mirror walk unusable) while
+top-of-book stayed quoted; under $5 tob fills June fires 27 trades/day at 73%
+wr — same wr as Apr/May. Feeds verified clean (1/s ticks, sigma estimator 1.0x
+correct scale, delay ~1.1s normal; high |z| is the decided-window nature of the
+trade, not a bug). (3) THE REAL DISEASE: the cheap-disagreement bucket (ask<50c)
+— 23-29% of trades and the entire profit engine in Apr/May (wr 49-68% vs 40%
+breakeven) — collapsed to 3% of trades in June and turned TOXIC (18% wr).
+Rich bucket now 61-69% of trades at 79%/65% wr vs 85% breakeven = losing.
+Same aggregate accuracy, no payment: adverse selection endgame — the only
+cheap asks left are the ones the model is wrong about. Deployment-realistic $5
+(tob, optimistic no-tape bracket): Apr +$67/day, May +$200/day, Jun +$2/day,
+Jul -$17/day. BTC-fit calibration does NOT transfer (top-bin 0.90 vs realized
+49-85% bucket-dependent). Deploy bar (clearly positive on recent months) is
+FAILING unless Jun12-Jul5 reverses. Judgment must use bucket-level lens.
