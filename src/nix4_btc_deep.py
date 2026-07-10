@@ -343,6 +343,9 @@ def main() -> None:
                          f"(selected on TRAIN CV only, M_zoo={len(ZOO)})")
             p = wf_predict(sub, feats, kind, prm)
             sub = sub.with_columns(pl.Series("p_hat", p))
+            sub.select("date", "wts", "t_offset", "split", "up_won", "p_hat") \
+               .write_parquet(f"results/nix4/preds_{fam}_{tag}.parquet",
+                              compression="zstd")
             if tag == "preopen":
                 res = scalp_sim(sub, fam)
                 frontier(sub, fam, lines)
