@@ -59,6 +59,7 @@ def load_fam(fam: str) -> pl.DataFrame:
     rates = {date: fees.params(date, fam)[0] for date in df["date"].unique().to_list()}
     df = df.join(pl.DataFrame({"date": list(rates), "rate": list(rates.values())}),
                  on="date", how="left")
+    df = df.with_columns(pl.col("up_won").cast(pl.Boolean))
     return df.sort("date", "wts", "t_offset")
 
 
