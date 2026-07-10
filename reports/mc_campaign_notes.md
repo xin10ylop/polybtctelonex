@@ -217,3 +217,4 @@ cheap asks left are the ones the model is wrong about. Deployment-realistic $5
 Jul -$17/day. BTC-fit calibration does NOT transfer (top-bin 0.90 vs realized
 49-85% bucket-dependent). Deploy bar (clearly positive on recent months) is
 FAILING unless Jun12-Jul5 reverses. Judgment must use bucket-level lens.
+2026-06-13: windows 1920, pass 69, tape pnl $-67.26
