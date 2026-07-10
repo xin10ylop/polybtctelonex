@@ -115,7 +115,7 @@ def push(msg: str) -> None:
     if sh(f'git commit -m "{msg}" >/dev/null 2>&1') != 0:
         return
     for i in range(4):
-        if sh("git push -u origin claude/polymarket-btc-strategy-ys9coc") == 0:
+        if sh("git push -u origin HEAD") == 0:   # current branch, whatever the session named it
             return
         time.sleep(2 ** (i + 1))
     print("PUSH FAILED after retries", flush=True)
