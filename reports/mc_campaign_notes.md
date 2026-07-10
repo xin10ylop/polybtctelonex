@@ -229,3 +229,14 @@ FEECHECK sol-5m 2026-06-15: implied r=0.0700 regime=0.07 OK
 2026-06-20: windows 1915, pass 25, tape pnl $-18.02
 2026-06-21: windows 1920, pass 36, tape pnl $+24.48
 2026-06-22: windows 1920, pass 27, tape pnl $+9.53
+USER SCALP REDO (2026-07-10, src/nix_scalp.py, 611,712 trade-rows, 92 BTC days):
+EVERY config negative. User's exact shape (taker<=51c @ open-10s, TP+4c, stop
+open+10s): TP hits only 40%, stops 60% avg -$1.68 -> NET -$0.80/trade, t=-54.
+HOLD variant (no stop): TP hits 88% (+$0.48-0.78) — THIS matches the user's
+"wins 7+/10" experience — but the 12% full-stake wipeouts cost -$10 each ->
+NET -$0.40 to -$0.62/trade, t=-11 to -15. Martingale touch math: entry 0.51,
+TP 0.55 -> touch prob = 0.51/0.55 = 92.7% at ZERO edge; measured 88%. The
+high win rate is structural, not alpha; expectancy = -(costs). No direction
+signal helps (blind/momentum/fade 60s+300s all equally negative; ML found
+nothing pre-open in Phase 3). The 10s stop makes it WORSE (-$0.80 vs -$0.51):
+60% of trades pay spread+2 fees for a coin-flip exit.
