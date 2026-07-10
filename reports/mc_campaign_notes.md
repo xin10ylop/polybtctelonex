@@ -219,3 +219,6 @@ Jul -$17/day. BTC-fit calibration does NOT transfer (top-bin 0.90 vs realized
 FAILING unless Jun12-Jul5 reverses. Judgment must use bucket-level lens.
 2026-06-13: windows 1920, pass 69, tape pnl $-67.26
 2026-06-14: windows 1920, pass 51, tape pnl $-20.96
+FEECHECK eth-5m 2026-06-15: implied r=0.0700 regime=0.07 OK
+FEECHECK sol-5m 2026-06-15: implied r=0.0700 regime=0.07 OK
+2026-06-15: windows 1920, pass 18, tape pnl $+2.34
