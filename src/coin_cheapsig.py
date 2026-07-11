@@ -31,7 +31,8 @@ import consolidate
 import telonex_dl as tdl
 from mc_campaign import binance_aggtrades, load_ticks
 
-COINS = [("eth", "ETHUSDT"), ("sol", "SOLUSDT")]
+COINS = [("eth", "ETHUSDT"), ("sol", "SOLUSDT"), ("xrp", "XRPUSDT"),
+         ("bnb", "BNBUSDT"), ("doge", "DOGEUSDT")]
 FAM, DUR = "5m", 300
 BLAT = 150_000
 LAT = 250_000
