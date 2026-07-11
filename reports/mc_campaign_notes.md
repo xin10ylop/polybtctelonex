@@ -436,3 +436,32 @@ mechanism-coherent (t0 sign-flip, book blindness), sell-limit sabotage proven
 Path to significance: dev is exhausted (oracle feed starts Apr2; May13-Jul5
 sealed; holdout spent), so only forward paper days or a win-rate-lifting model
 can resolve it. This is a live +EV signal to paper-trade, not yet a proven one.
+
+## Scalp pass 6 — the decisive test on 3x data (2026-07-11, src/nix_scalp6.py)
+
+Boundary direction signal on BOTH families, crypto_prices gate dropped
+(signal is pure-Binance): 5m Feb12-May12 (90 days, 25.8k windows, PRIMARY,
+independent) + 15m Oct11-May12 (214 days, 18.4k) + pooled. Plus Option B:
+walk-forward LGBM (expanding month folds) on book/flow features to lift wr.
+Holdout-safe (loader excludes it; sealed May13-Jul5 empty). Bar t>=3.0.
+
+VERDICT: **0 survivors. The pass-5 edge does not replicate on 3x data.**
+- 5m primary monthly wr: Feb 50.1%, Mar 53.2%, Apr 53.4%, May 55.6% — pass 5's
+  +$0.45/tr came from the Apr-May window (the two best months). Adding Feb and
+  the full 15m history washes it to ZERO: |z|>=.05 cap0.53 = +$0.09/tr t=0.47
+  (5m), +$0.08 t=0.46 (pooled). Not distinguishable from zero. Higher |z|
+  gates go NEGATIVE (pooled |z|>=.15 -$0.49 t=-2.6). This is the signature of
+  regime luck dissolving under more data — Rule 4 working as designed.
+- 15m monthly wr: 5 of 8 months BELOW breakeven (Oct/Nov 50.0, Dec 47.4,
+  Feb 51.3, Mar 51.4, Apr 48.1; only Jan 55.4, May 57.4 above). No trend,
+  no consistent edge across the 8-month history.
+- Option B (the model): OOS AUC 5m 0.528, 15m 0.513, pooled 0.517 — essentially
+  NO SKILL. Every model-gated slice NEGATIVE (t=-4 to -7). Book/flow features
+  do not predict the resolution direction beyond noise.
+- Fresh Jul6-8 positive but tiny (5m n=76 +$0.30; 15m n=20 +$0.67) — within
+  noise, and "works only recently" is a post-hoc retune Rule 4 forbids.
+
+CONCLUSION: after 6 passes (touch-by-x, direction ML, drift, gated geometry,
+boundary staleness, and now boundary at 3x scale + model), the pre-open scalp
+has NO edge that survives honest out-of-sample testing at scale. Pass 5's
+promising +$0.45/tr was an Apr-May small-sample mirage. The scalp is closed.
