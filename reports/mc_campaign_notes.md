@@ -403,3 +403,36 @@ STATUS: registered as a candidate, NOT a result. Resolution paths: (a) let
 fresh BTC days accumulate (holdout region unreadable, Rule 2); (b) port to
 multicoin feeds (5x surface, books need re-download — natural next
 campaign). Do NOT re-cut the dev era further.
+
+## Scalp pass 5 — RENEW the boundary direction signal (2026-07-11, src/nix_scalp5.py)
+
+Freed from the 51c/sell-limit rule (user instruction). Frozen pass-4 signal,
+extended to 15m + pooled (44+44 days), 3 monetizations priced from raw rows,
+cap sweep. Dev = Apr2-May12; fresh = Jul 6-8 (07-08 newly downloaded), sealed
+May13-Jul5 untouched. Bar: mean>0 AND t>=3.0.
+
+KEY FINDINGS:
+1. The renewal thesis is VINDICATED as a diagnosis. Same signal, same windows
+   (dev pooled |z|>=.05, t0=-0.5): hold_pure +$0.453/tr vs tp4_hold -$0.533 vs
+   tp4_bail -$0.531. Dropping the +4c sell-limit and holding to resolution is
+   a ~$1.00/trade swing from negative to positive — the +4c cap was throwing
+   away the directional edge's payoff (win pays +100% at 50c, cap took +8%).
+2. Every hold_pure cell at t0=-0.5 is POSITIVE: +$0.45 (|z|>=.05) rising to
+   +$1.18 (|z|>=.3, cap0.7, wr 59.5%). The book does NOT price the tilt (ask
+   ~0.505 even at |z|>=.30 where wr=59.5%) — that blindness is the edge.
+3. MECHANISM CONFIRMED by sign-flip at the physically-motivated horizon:
+   t0=-1.0 hold_pure = -$0.30/tr (t=-1.10); t0=-0.5 = +$0.20 to +$0.45. A
+   noise variable would not flip sign exactly at the ~0.5s oracle-lag horizon.
+4. BUT NO SURVIVOR at the pre-declared bar. Best pooled t=1.43 (|z|>=.05,
+   n=1122); best any-cell t=1.68 (|z|>=.3 cap0.7, n=137). Point estimates
+   strongly positive everywhere, variance too high to clear t>=3 (sd ~$10/tr).
+5. Fresh OOS Jul 6-8 (untouched): hold_pure +$0.67-0.84/tr, total +$114-161 —
+   BUT 2/3 days: 07-06 +$11, 07-07 -$24, 07-08 +$49. Consistent in sign, NOT
+   clean replication; the sell-limit stays NEGATIVE on fresh too (-$0.15/tr).
+
+VERDICT: the strongest lead in the project — positive on every dev cut,
+mechanism-coherent (t0 sign-flip, book blindness), sell-limit sabotage proven
+— but STATISTICALLY UNRESOLVED (t~1.4). Not a validated winner (Rule 4 holds).
+Path to significance: dev is exhausted (oracle feed starts Apr2; May13-Jul5
+sealed; holdout spent), so only forward paper days or a win-rate-lifting model
+can resolve it. This is a live +EV signal to paper-trade, not yet a proven one.
