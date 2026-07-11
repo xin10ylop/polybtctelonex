@@ -267,3 +267,4 @@ opinion). The pre-open scalp is unfixable by direction selection at
 retail-visible information.
 2026-07-02: windows 1920, pass 32, tape pnl $-19.77
 2026-07-03: windows 1920, pass 24, tape pnl $-5.85
+2026-07-04: windows 1920, pass 32, tape pnl $+29.14
