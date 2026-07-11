@@ -488,3 +488,22 @@ FINAL: the boundary win rate is fundamentally ~50-54%, hovering at breakeven,
 with CIs that include it even in the best period. No conditioning variable lifts
 it to a confident, enforceable edge. The only clean way to test the "emerging
 recent edge" hypothesis is forward paper trading — not more in-sample slicing.
+
+## THE 'CHEAP + SIGNAL' EDGE — the hidden structure (2026-07-11, nix_cheapsig.py)
+
+REFRAME: EV is win rate vs ENTRY PRICE, not win rate alone. Win rate by
+signal-side ask shows the book is efficient-minus-fees at every price EXCEPT
+one interaction: cheap side (ask<0.50) AND boundary signal agrees (|z|>=0.05)
+-> 5m 51.5% wr at 0.468 entry = +$0.607/tr (+6.1%). Same cheap WITHOUT signal
+= 44.5% (t=-3.1, toxic). The signal DISCRIMINATES mispriced-cheap from
+toxic-cheap; the EV comes from PRICE LEVERAGE, not direction skill.
+5m: 987 trades/90d (11/day), total +$599, $6.66/day @ $10; daily t=2.47
+p=0.016; win rate IDENTICAL train(51.1) vs val(51.1); every month positive
+(Feb+.93 Mar+.20 Apr+.71 May+1.19); fresh Jul6-8 +$0.68/tr. Compounding
+$100->$452/90d in-sample. HONEST CAVEATS: pooled w/ 15m daily p=0.34 (older
+era dilutes); NOT pre-registered (6 passes -> discount p, treat as best
+candidate not proof); fill CAPACITY at <0.50 unverified (recorded ToB ask,
+cheap sides may be thin). This is the strongest, most stable, mechanistically
+coherent result in the project and the first to reach daily significance.
+NEXT to confirm: capacity/fill-depth at the cheap ask; forward paper or fresh
+days; pre-registered one-shot on days > Jul 8.
