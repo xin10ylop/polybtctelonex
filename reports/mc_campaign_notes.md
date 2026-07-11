@@ -292,3 +292,26 @@ the shape loses ~27c per $10 trade to adverse selection: the +4c TP fills
 only 40% of the time vs the 77.8% breakeven the 10s-stop shape needs, and
 resting-maker entries are filled precisely when the market moves against you
 (maker50 zero-fee -$0.49 < taker51 zero-fee -$0.27).
+
+## User's scalp on the 15m family, full 9-month history (2026-07-11)
+
+results/nix_scalp_15m.parquet — 366,374 trade-rows, 2025-10-11 -> 2026-07-07
+(15m daily coverage gap: full-window books thin after mid-May; Jul 6-7 fresh
+days included). Same 18-config grid as 5m.
+
+Headline: **zero positive config-months out of all config x month cells
+(9 months x 18 configs), and every config negative in BOTH fee eras.**
+
+- PRE-FEE era (Oct 4 - Jan 4, Polymarket charged NOTHING — this is a real
+  zero-fee market, not a counterfactual): best config taker51/t-5/stop10
+  = -$0.234/trade. User's exact shape -$0.263. TP rate 24% vs 77.8% breakeven.
+- FEE era (Jan 5+): user's exact shape -$0.75 to -$0.83/trade, TP rate ~22%.
+- 15m TP rates are LOWER than 5m (24% vs 40%): the +-4c TP from a ~50c open
+  needs the same absolute odds move, but 15m books near open are stickier.
+
+Combined with the 5m zero-fee counterfactual and the on-chain fee audit,
+the evidence is now closed on the user's fee question from three independent
+directions: (1) real fills price fees exactly as modeled; (2) removing fees
+in simulation leaves every config negative; (3) a REAL fee-free era existed
+on 15m and the shape lost there too. The scalp's loss is structural
+(adverse selection / martingale touch identity), not a fee artifact.
