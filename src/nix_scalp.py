@@ -31,9 +31,14 @@ import numpy as np
 import polars as pl
 
 sys.path.insert(0, "src")
+import os
+
 import fees
 import loader
 import windows as W
+
+FAM = os.environ.get("SCALP_FAM", "5m")
+ZEROFEE = bool(os.environ.get("SCALP_ZEROFEE"))
 
 STAKE = 10.0
 T0S = [-10, -5]
@@ -46,15 +51,15 @@ TRAIN_END = "2026-03-19"
 
 def day_rows(date: str) -> list[dict]:
     try:
-        tr = (loader.load_daily("5m", "trades", [date]).collect()
+        tr = (loader.load_daily(FAM, "trades", [date]).collect()
               .sort("wts", "local_timestamp_us"))
-        b = (loader.load_daily("5m", "bookcurves", [date]).collect()
+        b = (loader.load_daily(FAM, "bookcurves", [date]).collect()
              .sort("wts", "local_timestamp_us"))
         bn = pl.read_parquet(f"data/processed/binance/aggTrades/{date}.parquet").sort("ts_us")
     except FileNotFoundError:
         return []
     d0 = int(dt.datetime.fromisoformat(date + "T00:00:00+00:00").timestamp())
-    meta = W.market_meta("5m", d0, d0 + 86400)
+    meta = W.market_meta(FAM, d0, d0 + 86400)
     tw = tr["wts"].to_numpy()
     tts = tr["local_timestamp_us"].to_numpy()
     tpx = tr["price"].to_numpy().astype(np.float64)
@@ -66,7 +71,7 @@ def day_rows(date: str) -> list[dict]:
     asz = b["ask_s0"].to_numpy().astype(np.float64)
     bt = bn["ts_us"].to_numpy()
     blog = np.log(bn["price"].to_numpy().astype(np.float64))
-    rate = fees.params(date, "5m")[0]
+    rate = 0.0 if ZEROFEE else fees.params(date, FAM)[0]
     rows = []
     for r_ in meta.iter_rows(named=True):
         w_ = r_["wts"]
@@ -165,14 +170,15 @@ def day_rows(date: str) -> list[dict]:
 
 
 def main() -> None:
-    dates = ([d for d in loader.available_dates("5m", "trades") if d <= "2026-05-12"]
+    dates = ([d for d in loader.available_dates(FAM, "trades") if d <= "2026-05-12"]
              + ["2026-07-06", "2026-07-07"])
     all_rows = []
     for date in dates:
         all_rows += day_rows(date)
         print(date, flush=True)
     df = pl.DataFrame(all_rows)
-    df.write_parquet("results/nix_scalp.parquet")
+    tag = FAM + ("_zerofee" if ZEROFEE else "")
+    df.write_parquet(f"results/nix_scalp_{tag}.parquet")
     print(f"NIX_SCALP DONE: {len(df)} trade-rows")
 
 
