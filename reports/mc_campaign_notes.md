@@ -347,3 +347,28 @@ cost structure is.
 Verdict: the market grants accuracy precisely where it doesn't pay
 (drift, touch-lift) and denies entry precisely where it would (direction
 skill exists mainly on windows priced >51c). No positive slice.
+
+## Scalp pass 3 — gated geometry grid (2026-07-11, src/nix_scalp3.py)
+
+User's correction: he bail-out market-sold 10s after open, so misses cost
+spread+drift, not -$10. Grid: {taker<=51, maker50 fee-free} x TP {2,3,4,6}c
+x bail {5,10,20,30}s, each cell walk-forward LGBM-gated (pass-2 features).
+Pre-declared bar: positive AND t>=3.5 (64 looks). Result: **0/64 survivors;
+every ungated cell and every gated slice negative.** Best: m50+2c/stop20
+top-decile -$0.108/tr (t=-4.5) at 81% touch.
+
+Why the bail-out doesn't save it (measured): by the time the TP has failed,
+the token has already fallen — maker50/TP4/stop10 misses exit at bid mean
+0.436 / median 0.450 (entry 0.50); 27% of misses the bid is <=0.40 before
+the bail-out fires. Realized miss cost ~$1.45/tr vs the ~$0.75 naive
+envelope -> true breakeven touch ~64%, gated model reaches 53%.
+
+Gates DO work as prediction: touch rates lift 49->73%, 66->83% across
+cells, and pnl improves monotonically with gating (-0.70 -> -0.11) but
+plateaus at a ~-$0.10/tr wall = the adverse-selection + spread tax that no
+selectivity removes. Gate content (best cell, descriptive): model buys
+BOUNCES — Binance down over 5m (b_ret_300s median -6bp), 15m market priced
+against the side (xtf15_mid 0.27), prior window against (0.21), high vol.
+It finds real 2c bounces at 81% frequency; the crashes in the other 19%
+cost more than the bounces pay. Four passes now converge on the same
+mechanism from four directions.
