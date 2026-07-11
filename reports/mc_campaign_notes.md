@@ -507,3 +507,28 @@ cheap sides may be thin). This is the strongest, most stable, mechanistically
 coherent result in the project and the first to reach daily significance.
 NEXT to confirm: capacity/fill-depth at the cheap ask; forward paper or fresh
 days; pre-registered one-shot on days > Jul 8.
+
+## Capacity + hit/miss dissection of cheap+signal (2026-07-11, nix_capacity.py)
+
+HIT/MISS METRICS (what makes it work): deep discounts are TOXIC not cheap —
+ask [.30,.44) wins 35.5% (-6.4pp vs breakeven), ask [.44,.50) wins 51-53%
+(+3-4pp). |z|>=.40 (calm-market spike) inverts to 44%. Book leaning AWAY from
+our side wins MORE (53.0 vs 49.9) = mispricing signature. Refined rule
+ask[.44,.50) & |z|[.05,.40): 5m 53.9% +$0.99/tr — but the lift is val-heavy
+(train Feb-Mar 52.2% p=0.29, val Apr-May 56.9% p=0.028), so refinements are
+mechanistically-motivated bonuses, NOT proven multipliers. Base rule stays
+the headline.
+
+CAPACITY (reload of real book depth at the signal-side touch, 987 5m windows):
+ToB $ at touch: p50 $27, p25 $7, p10 $2. Windows with >=$5: 80%, >=$10: 70%,
+>=$25: 51%, >=$50: 36%. $50 walk slippage median 0.48c (p90 1.9c).
+REALISTIC fills (walk book to stake, daily-t):
+  $5  all:  EV +$0.286/tr (+5.7%) t=2.38 p=0.019
+  $10 all:  EV +$0.540/tr (+5.4%) t=2.30 p=0.024
+  $10 SKIP-IF-THIN (only trade >=$10 at touch): n=687, wr 53.0%,
+       EV +$0.923/tr (+9.2%), daily-t=2.98, p=0.004  <-- BEST, deployable rule
+  $25 skip-thin: t=1.43 (capacity binds — deployable size is ~$5-10, not more)
+The operational skip-thin rule (only trade fillable windows) IMPROVES the edge
+because thin windows overlap the toxic deep-discount tail. Small-capacity edge:
+~7.6 trades/day 5m at $10 = ~$7/day EV. STILL: not pre-registered (discount p),
+5m-recent-era only, needs a clean forward one-shot on days > Jul 8.
