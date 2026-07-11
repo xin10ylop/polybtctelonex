@@ -603,3 +603,92 @@ all six archetypes of the published bot taxonomy are tested on this data:
 two are the real edge we already built (repricing + near-resolution = nix1
 lineage), four are measured dead, and the ledger (Appendix 5) shows who
 actually gets paid: the 3 fastest wallets out of 12,379.
+
+## Appendix 11: the multicoin campaign — 5 coins x 2 families x 97 days (2026-07-11)
+
+**Question.** Does the frozen nix1 machine, transplanted unchanged to the
+neglected coins (ETH/SOL/XRP/BNB/DOGE, 5m + 15m, coins' own Chainlink
+broadcast + own Binance tick nowcast, HYPE excluded for lacking tick data),
+still earn in the months BTC died — and does the pre-registered deployment
+stack pass its bar on the unseen Jun-Jul days?
+
+**Data.** 97 days (2026-04-02..07-05 + fresh 07-06/07), 186,179 windows,
+4,102 signal passes at frozen gates (|z|>=1.5, EV>=0.02, T=close-3s).
+Streaming pipeline: per-day download -> process -> tiny results -> push ->
+delete (results/mc/, src/mc_campaign.py). Fees on-chain-verified per coin
+(implied r = 0.0720/0.0700 exactly); resolution rule verified 99.7-100% per
+coin; fills at $5 top-of-book only when >=$5 rests at the touch ("C"),
+with book-walk ("A") and tape-validated ("B") conventions as brackets.
+
+### Monthly economics ($5 stakes, convention C, all coins+fams)
+
+| month | trades | wr | total | $/day |
+|---|---|---|---|---|
+| Apr | 1,247 | .880 | +$2,501 | +$86 |
+| May | 1,292 | .897 | +$6,819 | +$220 |
+| Jun | 625 | .878 | +$147 | +$4.9 |
+| Jul 1-7 | 132 | .886 | +$45 | +$6.4 |
+
+The April-May regime was real and enormous relative to stake — and it is
+over. The decay that killed BTC in June hit the alts in June too. The May
+number is dominated by cheap-disagreement trades (ask<0.50 bucket: +$6,144
+of the +$6,819) — the same adverse-selection endgame documented for BTC:
+that bucket fell to wr .293 in June (breakeven ~.32) and 6 trades in July.
+
+### The pre-registered deploy bar: **NO DEPLOY**
+
+The frozen stack (basis guard + BTC-calibrated EV gate, frozen 2026-07-09
+before any Jun+ coin data was seen) on unseen Jun-1..Jul-7:
+**166 trades, -$11.0 total, -$0.31/day, daily t=-0.18.** The bar demanded
+clearly positive. It is not. Per pre-registration: NO DEPLOY.
+
+### Post-mortem decomposition (same unseen window, reported for honesty)
+
+| variant | n | wr | $/day | daily t |
+|---|---|---|---|---|
+| raw frozen signal, no overlay | 757 | .880 | +$5.17 | +2.08 |
+| + basis guard only | 723 | .909 | +$4.81 | +2.87 |
+| + calibrated EV gate only | 180 | .661 | +$3.08 | +1.32 |
+| full stack (registered) | 166 | .663 | -$0.31 | -0.18 |
+| trades the cal gate blocked | 575 | .951 | +$2.55 | +2.71 |
+
+The calibration overlay is the component that failed, and it failed by
+non-transfer in the conservative-looking direction: the frozen BTC bins cap
+predicted wr at 0.90, so the gate blocks every rich-ask trade (alts realize
+.933-.948 there — every frozen bin UNDER-predicts alt wr) while keeping the
+cheap trades whose regime had just died. A guard fit on one asset's dev era
+inverted the selection on another asset's new regime. The basis guard, by
+contrast, behaved as designed (blocked 92 windows at wr .326; saved money in
+June; 3/88 events were cross-coin simultaneous).
+
+The raw signal + basis guard at $5 ToB was +$4.81/day (t=2.87) on the unseen
+window, concentrated in the 15m family (+$3.97/day t=2.44 vs 5m +$1.31/day
+t=0.63). **This is a post-hoc observation, not a validated strategy** — the
+registered stack failed, and picking the variant that worked after seeing
+the window is exactly the retuning Rule 4 forbids. It is hereby
+pre-registered as the next one-shot hypothesis: raw frozen signal + basis
+guard, NO calibration gate, $5 ToB fills, validate only on days AFTER
+2026-07-07, bar = positive with daily t>=2 over >=20 trade-days.
+
+### Tail, concentration, capacity
+
+Full-timeline frozen-stack pnl is 89% top-5-days (one May day +$4,440);
+worst day -$25, max drawdown $62 at $5 stakes. Capacity is the binding
+constraint: on stack-passing windows the touch holds median $24, p25 $7 —
+$5 stakes are near the practical ceiling per market; scaling is horizontal
+(more coins/families/wallets) not vertical. Bankroll projections at the
+LATEST-regime rate (Jun-Jul): registered stack -$0.31/day -> negative at any
+size — NO DEPLOY stands. The unregistered raw+guard variant would project
+$100 bankroll ~+$4.8/day gross, but per above it must first survive its
+one-shot on fresh days.
+
+### Verdict
+
+1. The signal transfers: direction wr .88 on alts through July, on brand-new
+   feeds, with frozen parameters. The look-ahead discipline held end-to-end.
+2. The economics decayed on schedule: the alts repeated BTC's Apr->Jul arc
+   with ~2 months' lag. Money printed in Apr-May; fee-floor by June.
+3. The registered deployment stack FAILS its own bar: NO DEPLOY.
+4. One honest thread remains: raw signal + basis guard on 15m alts, still
+   t~2.4-2.9 positive on unseen Jun-Jul at tiny size. Pre-registered above;
+   decided by fresh post-Jul-7 data or not at all.

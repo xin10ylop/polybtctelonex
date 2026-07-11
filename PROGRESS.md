@@ -1,5 +1,16 @@
 # PROGRESS — Polymarket BTC Up/Down Strategy Discovery
 
+**LATEST (2026-07-11): Appendix 11 DONE — multicoin campaign complete (97/97
+days, results/mc/, src/mc_campaign.py + src/mc_judge.py). Registered deploy
+bar FAILED (frozen stack -$0.31/day on unseen Jun1-Jul7, t=-0.18): NO DEPLOY.
+Post-mortem: the BTC-fit calibration gate inverted selection on alts (blocks
+rich asks that win .95, keeps dead cheap bucket); basis guard behaved.
+NEWLY PRE-REGISTERED one-shot (untested): raw frozen signal + basis guard,
+NO cal gate, $5 ToB; validate ONLY on days > 2026-07-07; bar = positive,
+daily t>=2, >=20 trade-days. Scalp question closed 3 ways (fee audit vs 2.4M
+fills exact; zero-fee counterfactual all-negative; REAL fee-free 15m era
+all-negative) — reports/mc_campaign_notes.md.**
+
 **Current phase:** COMPLETE + extensions. FINAL_REPORT.md (main verdict: zero grid
 survivors) + Appendices 1-7. **HOLDOUT IS SPENT** — read exactly once (Appendix 6,
 frozen oracle-trade configs). It must NEVER be read again; any further validation
