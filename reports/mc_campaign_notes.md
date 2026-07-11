@@ -317,3 +317,33 @@ on 15m and the shape lost there too. The scalp's loss is structural
 (adverse selection / martingale touch identity), not a fee artifact.
 2026-07-05: windows 1920, pass 28, tape pnl $+4.23
 CAMPAIGN DONE
+
+## Scalp pass 2 — the user's reframed targets (2026-07-11, src/nix_scalp2.py)
+
+New features: Binance microstructure (taker-flow imb 1/3/10/30s, 1-10s rets,
+intensity, 1s-grid vol), Chainlink anchor basis/staleness/tick-rate, BBO
+mid/spread/change-rate; side-relative signing. 51,622 side-rows, 90 days,
+walk-forward LGBM, folds 2-6 OOS.
+
+Q1 touch(+4c) by x: REAL predictability — AUC 0.60-0.63 all horizons.
+Top-10% slice lifts touch 40.6%->58.1% (x=10s) yet money still negative
+(-$0.44/tr vs -$0.81 unfiltered: model halves the loss, ceiling far below
+the 77.8% breakeven).
+Q2 direction: AUC 0.524. Confident tail on ALL windows 51-54% wr (LGBM
+thread nondeterminism gives a 51.4-54.1% band across reruns) — near/above
+the 52.76% breakeven. BUT on FEASIBLE rows (ask<=51c — the only ones the
+scalp can buy) wr collapses to 49.5% FLAT at every confidence level;
+pure-hold -$0.34/tr (t=-3). MECHANISM: the <=51c entry cap is an adverse
+filter. When model AND crowd agree, ask>51c -> no entry. What remains
+cheap is exactly where the crowd disagrees with the model, and the crowd
+wins. The entry rule guarantees trading against better-informed flow.
+(Fading the model on feasible rows: 50.5% vs 50.8% breakeven — also dead.)
+Q3 drift_5s: user's 55-60% accuracy claim CONFIRMED — 59.7% on 30,653
+confident OOS rows (AUC 0.585) predicting the token's first 5s repricing.
+Not monetizable: expected |5s move| ~0.4c/share vs round-trip cost ~4.5c
+(1c spread + 2x taker fee) — 10x+ short. Accuracy was never the obstacle;
+cost structure is.
+
+Verdict: the market grants accuracy precisely where it doesn't pay
+(drift, touch-lift) and denies entry precisely where it would (direction
+skill exists mainly on windows priced >51c). No positive slice.
