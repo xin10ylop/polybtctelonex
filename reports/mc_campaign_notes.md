@@ -465,3 +465,26 @@ CONCLUSION: after 6 passes (touch-by-x, direction ML, drift, gated geometry,
 boundary staleness, and now boundary at 3x scale + model), the pre-open scalp
 has NO edge that survives honest out-of-sample testing at scale. Pass 5's
 promising +$0.45/tr was an Apr-May small-sample mirage. The scalp is closed.
+
+## Pass 6 deep diagnostic — where the win rate fails/holds (2026-07-11, nix_scalp6_diag.py)
+
+WHAT DROPS IT: win rate is NON-MONOTONIC in |z|. Peaks ~53.9% at |z| .05-.10,
+then CRASHES to 44.7% at |z|>=.40 — and those are calm-market spikes (low sig
+~6.5, biggest 5s move). Mechanism: a sharp move in a quiet market REVERTS, so
+the boundary signal inverts there. Real, interpretable — but a fade of a tiny
+bin (n=360), only visible in validation not train, so a hypothesis not a rule.
+DEAD conditioning vars: 5s-momentum agreement (50.0 vs 49.8), book-imbalance
+agreement (50.2 vs 49.6) — no information.
+
+ENFORCEABILITY (5m |z|>=.05, clean forward test Feb-Mar -> Apr-May):
+  TRAIN Feb-Mar: wr 51.9% (CI 49.8-54.1) — AT breakeven (51.8%), no edge to lock
+  VALID Apr-May: wr 54.0% (CI 51.1-56.9) — CI still includes breakeven
+Month trend Feb 50.1 -> Mar 53.2 -> Apr 53.5 -> May 55.6 -> Jul 53.9: an upward
+drift, consistent with an emerging edge OR recent-regime luck — indistinguishable
+in-sample. The training period sits at breakeven, so there is NOTHING to enforce;
+the recent lift cannot be separated from regime. No enforceable parameter found.
+
+FINAL: the boundary win rate is fundamentally ~50-54%, hovering at breakeven,
+with CIs that include it even in the best period. No conditioning variable lifts
+it to a confident, enforceable edge. The only clean way to test the "emerging
+recent edge" hypothesis is forward paper trading — not more in-sample slicing.
