@@ -372,3 +372,34 @@ against the side (xtf15_mid 0.27), prior window against (0.21), high vol.
 It finds real 2c bounces at 81% frequency; the crashes in the other 19%
 cost more than the bounces pay. Four passes now converge on the same
 mechanism from four directions.
+
+## Scalp pass 4 — boundary-print staleness trade (2026-07-11, src/nix_scalp4.py)
+
+Mechanism-first (not mined): window open = first Chainlink print >= boundary;
+print VALUES lag Binance ~1s (holdout-proven nix1 edge) -> a Binance move in
+the final second tilts the open reference in the mover's favor. Signal =
+pure 1s Binance return before T0 (basis-proof after smoke test caught the
+cross-feed level gap being basis-contaminated, +2.8bp median venue basis;
+same Jul-6 failure mode, now excluded by construction), z = g/sigma300.
+Feed-era dev Apr2-May12, 32 pre-declared trade cells, bar t>=3.5.
+
+MEASUREMENT — the mechanism is REAL:
+- signal-side wr by entry timing (|z|>=0.05, uncapped): -5s 46.3%,
+  -2s 49.6%, -1s 51.5%, -0.5s 53.8% (n=1089). Monotone gradient with a
+  SIGN FLIP: pre-boundary spikes mean-revert at 5s but carry the open at
+  0.5s. Coherent microstructure story, first which-side signal ever to
+  clear the 52.8% breakeven at feasible entries.
+- book does NOT price it: signal-side ask 0.505-0.508 in gated windows.
+
+TRADE RESULTS:
+- All 32 TP-shape cells NEGATIVE (user's +4c sell-limit forfeits the tail
+  that pays for the ~46% losers; the tilt's value is 0.49->1.00, not
+  0.49->0.53). 0/32 survivors.
+- PURE HOLD at -0.5s: positive point estimate at EVERY gate (+$0.46 to
+  +$0.78/tr, n=865..94) but t=0.75-1.32 — statistically unresolved; needs
+  ~5k+ trades. Fresh Jul6-7: n=48, wr 47.9%, negative — no confirmation.
+
+STATUS: registered as a candidate, NOT a result. Resolution paths: (a) let
+fresh BTC days accumulate (holdout region unreadable, Rule 2); (b) port to
+multicoin feeds (5x surface, books need re-download — natural next
+campaign). Do NOT re-cut the dev era further.
