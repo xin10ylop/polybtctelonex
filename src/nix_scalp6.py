@@ -37,7 +37,7 @@ import fees
 import loader
 import windows as W
 
-FAM, DUR = "15m", 900
+FAMS = (("5m", 300), ("15m", 900))
 T0S = (-1.0, -0.5)
 LAT = 250_000
 BLAT = 150_000
@@ -50,11 +50,11 @@ FEATS = ["absz", "g_bp", "sig", "q_imb", "spread", "mid", "ask",
          "hour", "dow"]
 
 
-def day_rows(date: str) -> list[dict]:
+def day_rows(family: str, dur: int, date: str) -> list[dict]:
     try:
-        tr = (loader.load_daily(FAM, "trades", [date]).collect()
+        tr = (loader.load_daily(family, "trades", [date]).collect()
               .sort("wts", "timestamp_us"))
-        b = (loader.load_daily(FAM, "bookcurves", [date]).collect()
+        b = (loader.load_daily(family, "bookcurves", [date]).collect()
              .sort("wts", "timestamp_us"))
         bn = pl.read_parquet(
             f"data/processed/binance/aggTrades/{date}.parquet").sort("ts_us")
@@ -63,7 +63,7 @@ def day_rows(date: str) -> list[dict]:
     if tr.is_empty() or b.is_empty():
         return []
     d0 = int(dt.datetime.fromisoformat(date + "T00:00:00+00:00").timestamp())
-    meta = W.market_meta(FAM, d0, d0 + 86400)
+    meta = W.market_meta(family, d0, d0 + 86400)
     tw = tr["wts"].to_numpy(); tts = tr["timestamp_us"].to_numpy()
     tpx = tr["price"].to_numpy().astype(np.float64)
     bw = b["wts"].to_numpy(); bts = b["timestamp_us"].to_numpy()
@@ -78,7 +78,7 @@ def day_rows(date: str) -> list[dict]:
     bsgn = np.where(bn["is_buyer_maker"].to_numpy(), -1.0, 1.0)
     cnet = np.concatenate([[0.0], np.cumsum(bsgn * bq_)])
     cgrs = np.concatenate([[0.0], np.cumsum(bq_)])
-    rate = fees.params(date, FAM)[0]
+    rate = fees.params(date, family)[0]
     rows = []
     for r_ in meta.iter_rows(named=True):
         w_ = r_["wts"]
@@ -102,7 +102,7 @@ def day_rows(date: str) -> list[dict]:
         g0 = B - 5_000_000 - np.arange(300, -1, -1) * 1_000_000
         gi = np.searchsorted(bt, g0, "right") - 1
         gp = np.where(gi >= 0, blog[np.maximum(gi, 0)], np.nan)
-        sig = float(np.nanstd(np.diff(gp))) * math.sqrt(float(DUR)) * 1e4
+        sig = float(np.nanstd(np.diff(gp))) * math.sqrt(float(dur)) * 1e4
         if not (np.isfinite(sig) and sig > 0):
             continue
         for t0 in T0S:
@@ -142,7 +142,7 @@ def day_rows(date: str) -> list[dict]:
                 return fsgn * (cnet[kbn + 1] - cnet[k1 + 1]) / g_ if g_ > 0 else 0.0
             k5 = int(np.searchsorted(bt, T0 - BLAT - 5_000_000, "right")) - 1
             rows.append({
-                "date": date, "wts": int(w_), "t0": t0, "mo": date[:7],
+                "date": date, "family": family, "wts": int(w_), "t0": t0, "mo": date[:7],
                 "g_bp": round(g, 3), "absz": round(abs(z), 4), "sig": round(sig, 2),
                 "side": side, "win": win, "rate": rate, "ask": round(float(ask), 4),
                 "q_imb": round(qimb, 4), "spread": round(float(spread), 4),
@@ -159,13 +159,14 @@ def build() -> pl.DataFrame:
     out = "results/nix_scalp6_rows.parquet"
     if os.path.exists(out):
         return pl.read_parquet(out)
-    avail = [d for d in loader.available_dates(FAM, "trades")
-             if d <= DEV_HI or d >= "2026-07-06"]
     all_rows = []
-    for i, date in enumerate(avail):
-        all_rows += day_rows(date)
-        if i % 30 == 0:
-            print(f"  {date} ({i}/{len(avail)})", flush=True)
+    for family, dur in FAMS:
+        avail = [d for d in loader.available_dates(family, "trades")
+                 if d <= DEV_HI or d >= "2026-07-06"]
+        for i, date in enumerate(avail):
+            all_rows += day_rows(family, dur, date)
+            if i % 30 == 0:
+                print(f"  {family} {date} ({i}/{len(avail)})", flush=True)
     df = pl.DataFrame(all_rows, infer_schema_length=None)
     df.write_parquet(out)
     return df
@@ -185,45 +186,11 @@ def tstat(v):
     return float(v.mean() / (v.std(ddof=1) / np.sqrt(len(v)))) if len(v) > 2 else float("nan")
 
 
-def main() -> None:
-    df = build()
-    dev = df.filter((pl.col("date") <= DEV_HI) & (pl.col("t0") == -0.5))
-    fresh = df.filter((pl.col("date") >= "2026-07-06") & (pl.col("t0") == -0.5))
-    print(f"\nrows total {len(df)}; dev(-0.5) {len(dev)} over {dev['date'].n_unique()} days "
-          f"({dev['mo'].n_unique()} months); fresh {len(fresh)}")
-
-    print("\n===== Q1a WIN RATE by month (fee-free signal quality, |z|>=0.05) =====")
-    print("breakeven direction wr at ~0.50 entry (hold) ~= 51.8%")
-    g = dev.filter(pl.col("absz") >= 0.05)
-    t = (g.group_by("mo").agg(pl.len().alias("n"), pl.col("win").mean().round(4).alias("wr"),
-                              pl.col("ask").mean().round(3).alias("ask"))
-          .sort("mo"))
-    for r in t.iter_rows(named=True):
-        print(f"  {r['mo']}: n={r['n']:>4} wr {r['wr']:.1%} ask~{r['ask']}")
-
-    print("\n===== Q1b POOLED significance, hold_pure (does 5x n clear t>=3?) =====")
-    for zg in (0.05, 0.15, 0.30):
-        base = dev.filter(pl.col("absz") >= zg)
-        for cap in (0.53, 0.60, 0.70):
-            v = pnl_hold(base, cap); m = np.isfinite(v)
-            if m.sum() < 100:
-                continue
-            wr = base.filter(pl.Series(m))["win"].mean()
-            star = "  <-- SURVIVOR" if np.nanmean(v[m]) > 0 and tstat(v[m]) >= 3.0 else ""
-            print(f"  |z|>={zg} cap{cap}: n={m.sum():>5} wr {wr:.1%} "
-                  f"${np.nanmean(v[m]):+.4f}/tr t={tstat(v[m]):+.2f}{star}")
-
-    print("\n===== placebo: t0=-1.0 should be ~flat/negative (mechanism check) =====")
-    pl_ = df.filter((pl.col("date") <= DEV_HI) & (pl.col("t0") == -1.0) & (pl.col("absz") >= 0.05))
-    v = pnl_hold(pl_, 0.60); m = np.isfinite(v)
-    print(f"  t0=-1.0 |z|>=.05 cap0.60: n={m.sum()} wr {pl_.filter(pl.Series(m))['win'].mean():.1%} "
-          f"${np.nanmean(v[m]):+.4f}/tr t={tstat(v[m]):+.2f}")
-
-    # ---------- Q2 Option B: walk-forward win-rate model ----------
-    print("\n===== Q2 WALK-FORWARD MODEL (expanding month folds, lift win rate) =====")
+def walk_model(d: pl.DataFrame):
+    """Expanding month-fold LGBM; returns (dm with 'p', oos_auc, baseline_wr)."""
     import lightgbm as lgb
     from sklearn.metrics import roc_auc_score
-    d = dev.sort("date")
+    d = d.sort("date")
     months = sorted(d["mo"].unique().to_list())
     X = d.select(FEATS).to_numpy().astype(np.float64)
     y = d["win"].to_numpy().astype(int)
@@ -238,25 +205,92 @@ def main() -> None:
         m.fit(X[tr], y[tr])
         proba[te] = m.predict_proba(X[te])[:, 1]
     ok = np.isfinite(proba)
-    auc = roc_auc_score(y[ok], proba[ok]) if ok.sum() else float("nan")
-    print(f"  OOS n={ok.sum()}, AUC={auc:.4f} (0.50=no skill); baseline wr {y[ok].mean():.1%}")
-    dm = d.with_columns(pl.Series("p", proba)).filter(pl.col("p").is_not_null())
-    for thr in (0.52, 0.54, 0.56, 0.58):
+    auc = roc_auc_score(y[ok], proba[ok]) if ok.sum() and 0 < y[ok].mean() < 1 else float("nan")
+    return d.with_columns(pl.Series("p", proba)), auc, (y[ok].mean() if ok.sum() else float("nan"))
+
+
+def analyze(dev: pl.DataFrame, df_all: pl.DataFrame, label: str, hits: list) -> None:
+    print(f"\n############## {label} ##############")
+    ndays = dev["date"].n_unique()
+    print(f"dev(-0.5) n={len(dev)} over {ndays} days ({dev['mo'].n_unique()} months)")
+
+    print("Q1a WIN RATE by month (|z|>=0.05; breakeven hold ~51.8%):")
+    g = dev.filter(pl.col("absz") >= 0.05)
+    for r in (g.group_by("mo").agg(pl.len().alias("n"),
+              pl.col("win").mean().round(4).alias("wr"),
+              pl.col("ask").mean().round(3).alias("ask")).sort("mo").iter_rows(named=True)):
+        flag = "" if r["wr"] >= 0.518 else "  (below breakeven)"
+        print(f"   {r['mo']}: n={r['n']:>4} wr {r['wr']:.1%} ask~{r['ask']}{flag}")
+
+    print("Q1b significance, hold_pure (bar t>=3.0):")
+    for zg in (0.05, 0.15, 0.30):
+        base = dev.filter(pl.col("absz") >= zg)
+        for cap in (0.53, 0.60, 0.70):
+            v = pnl_hold(base, cap); m = np.isfinite(v)
+            if m.sum() < 100:
+                continue
+            wr = base.filter(pl.Series(m))["win"].mean()
+            surv = np.nanmean(v[m]) > 0 and tstat(v[m]) >= 3.0
+            star = "  <-- SURVIVOR" if surv else ""
+            if surv:
+                hits.append(f"{label} |z|>={zg} cap{cap}")
+            print(f"   |z|>={zg} cap{cap}: n={m.sum():>5} wr {wr:.1%} "
+                  f"${np.nanmean(v[m]):+.4f}/tr t={tstat(v[m]):+.2f}{star}")
+
+    plc = df_all.filter((pl.col("date") <= DEV_HI) & (pl.col("t0") == -1.0)
+                        & (pl.col("absz") >= 0.05))
+    v = pnl_hold(plc, 0.60); m = np.isfinite(v)
+    if m.sum():
+        print(f"placebo t0=-1.0 |z|>=.05 cap0.60: n={m.sum()} "
+              f"wr {plc.filter(pl.Series(m))['win'].mean():.1%} "
+              f"${np.nanmean(v[m]):+.4f}/tr t={tstat(v[m]):+.2f} (want <= signal)")
+
+    print("Q2 walk-forward model (lift win rate OOS):")
+    dm, auc, base_wr = walk_model(dev)
+    dm = dm.filter(pl.col("p").is_not_null())
+    print(f"   OOS AUC={auc:.4f} (0.50=no skill); model-scored baseline wr {base_wr:.1%}")
+    for thr in (0.52, 0.54, 0.56):
         sel = dm.filter(pl.col("p") >= thr)
         if len(sel) < 100:
-            print(f"  p>={thr}: n<100"); continue
+            continue
         v = pnl_hold(sel, 0.70); mm = np.isfinite(v)
-        star = "  <-- SURVIVOR" if np.nanmean(v[mm]) > 0 and tstat(v[mm]) >= 3.0 else ""
-        print(f"  model p>={thr}: n={mm.sum():>5} wr {sel['win'].mean():.1%} "
+        surv = np.nanmean(v[mm]) > 0 and tstat(v[mm]) >= 3.0
+        star = "  <-- SURVIVOR" if surv else ""
+        if surv:
+            hits.append(f"{label} model p>={thr}")
+        print(f"   model p>={thr}: n={mm.sum():>5} wr {sel['win'].mean():.1%} "
               f"${np.nanmean(v[mm]):+.4f}/tr t={tstat(v[mm]):+.2f}{star}")
+
+
+def main() -> None:
+    df = build()
+    dev = df.filter((pl.col("date") <= DEV_HI) & (pl.col("t0") == -0.5))
+    fresh = df.filter((pl.col("date") >= "2026-07-06") & (pl.col("t0") == -0.5))
+    print(f"rows total {len(df)}; dev(-0.5) {len(dev)}; fresh {len(fresh)}")
+    for fam, _ in FAMS:
+        s = dev.filter(pl.col("family") == fam)
+        print(f"  {fam}: {len(s)} rows, {s['date'].n_unique()} days")
+
+    hits: list = []
+    analyze(dev.filter(pl.col("family") == "5m"),
+            df.filter(pl.col("family") == "5m"), "5m (primary, independent)", hits)
+    analyze(dev.filter(pl.col("family") == "15m"),
+            df.filter(pl.col("family") == "15m"), "15m", hits)
+    analyze(dev, df, "POOLED 5m+15m (clustering caveat)", hits)
+
+    print(f"\n===== SURVIVORS at bar (mean>0 AND t>=3.0): {len(hits)} =====")
+    for h in hits:
+        print("  ", h)
 
     if len(fresh):
         print("\n===== FRESH Jul6-8 (OOS, no bar) =====")
-        v = pnl_hold(fresh.filter(pl.col("absz") >= 0.05), 0.60); m = np.isfinite(v)
-        if m.sum():
-            print(f"  hold_pure |z|>=.05 cap0.60: n={m.sum()} wr "
-                  f"{fresh.filter(pl.col('absz')>=0.05).filter(pl.Series(m))['win'].mean():.1%} "
-                  f"${np.nanmean(v[m]):+.3f}/tr total ${np.nansum(v[m]):+.1f}")
+        for fam in ("5m", "15m"):
+            fr = fresh.filter((pl.col("family") == fam) & (pl.col("absz") >= 0.05))
+            v = pnl_hold(fr, 0.60); m = np.isfinite(v)
+            if m.sum():
+                print(f"  {fam} hold_pure |z|>=.05 cap0.60: n={m.sum()} "
+                      f"wr {fr.filter(pl.Series(m))['win'].mean():.1%} "
+                      f"${np.nanmean(v[m]):+.3f}/tr total ${np.nansum(v[m]):+.1f}")
     print("\nNIX_SCALP6 DONE")
 
 
