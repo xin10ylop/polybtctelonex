@@ -249,3 +249,19 @@ nothing pre-open in Phase 3). The 10s stop makes it WORSE (-$0.80 vs -$0.51):
 2026-06-29: windows 1920, pass 12, tape pnl $-23.22
 2026-06-30: windows 1920, pass 34, tape pnl $-5.92
 2026-07-01: windows 1920, pass 10, tape pnl $-2.42
+MAXIMAL DIRECTION PASS (2026-07-11, user-ordered "combine everything, think"):
+src/nix_scalp_ml.py. (a) First run showed 65% OOS direction accuracy — CAUGHT
+as selection leakage by the mandated verification (gt sample = TP-failed sides
+=> features predicted which side was sampled, not the future; single-feature
+check exposed it: all features 44-52% alone). Rule 1 works. (b) CLEAN test,
+official labels, ALL 20,902 windows, walk-forward LGBM over book imbalance +
+depth + taker flow (3 horizons) + whale flow + 15m market + prior windows +
+Binance mom/vol + clock: OOS AUC 0.514; most-confident 7,098 windows = 52.4%
+accuracy vs ~53% fee breakeven. Top features ARE order-book flow (flow_imb_10s,
+q_imb, depth_imb) — the signal exists but is priced under the fee wall,
+consistent with all six prior measurements (52.1% anti-streak, ML 46k windows).
+(c) TP-hit path model (new target): AUC 0.558; best 5% slice 52.6% TP vs 77.8%
+breakeven, still -$0.55/trade. (d) Strata (hour/vol/prior/15m): -$0.75 to
+-$0.89/trade everywhere. Compounding at negative mean = faster ruin (math, not
+opinion). The pre-open scalp is unfixable by direction selection at
+retail-visible information.
