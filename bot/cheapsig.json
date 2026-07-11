@@ -1,0 +1,38 @@
+{
+  "name": "cheap+signal (nix2)",
+  "frozen": "2026-07-11",
+  "one_line": "Buy the underpriced side when the oracle-lag signal confirms it and the book is fillable; skip toxic-cheap, spikes, and thin books.",
+  "why_it_works": "EV = win-rate vs entry PRICE, not win-rate alone. The book sometimes underprices a side (crowd piled the other way); the Binance-vs-Chainlink oracle lag independently says that side just ticked up. Cheap + confirmation = a mispricing, not information. Profit is price leverage (win ~52% at ~0.47 = +6-9%/trade), not direction skill.",
+  "family": "5m",
+  "signal": {
+    "decision_time": "boundary - 0.5s",
+    "g_bp": "1e4 * ln( Binance(T0-150ms) / Binance(T0-150ms-1s) )",
+    "sigma": "1s-grid Binance vol over prior 300s * sqrt(300) * 1e4",
+    "z": "g_bp / sigma",
+    "side": "up if g>0 else down"
+  },
+  "entry_rules": {
+    "ask_min": 0.44,
+    "ask_max": 0.4999,
+    "abs_z_min": 0.05,
+    "abs_z_max": 0.40,
+    "min_touch_usd": 10.0,
+    "stake_usd": 10.0,
+    "fill": "taker at signal-side top-of-book at T0+250ms, walk book if thin",
+    "exit": "hold to resolution (no take-profit cap)"
+  },
+  "in_sample_evidence": {
+    "period": "5m 2026-02-12..05-12, 90 days",
+    "base_rule": "ask<0.50 & |z|>=0.05: n=987, wr 51.5%, +$0.61/tr, daily t=2.47 p=0.016",
+    "deployable_$10_skip_thin": "n=687, wr 53.0%, +$0.92/tr (+9.2%), daily t=2.98 p=0.004",
+    "stability": "win rate identical train(51.1)/val(51.1); positive every month; fresh Jul6-8 positive",
+    "caveats": "NOT pre-registered (found after 6 passes -> discount p); 5m recent era only; small capacity (~$10/trade, decays by $25); pooled with 15m not significant"
+  },
+  "PRE_REGISTERED_ONESHOT": {
+    "rule": "FROZEN above — do not change any parameter",
+    "validate_only_on": "5m days strictly after 2026-07-08 (genuinely unseen)",
+    "bar": "positive EV AND daily-EV t >= 2.0 over >= 20 trade-days",
+    "if_pass": "real edge confirmed -> paper-live then small real stakes",
+    "if_fail": "in-sample mirage -> report negative, do not retune"
+  }
+}
