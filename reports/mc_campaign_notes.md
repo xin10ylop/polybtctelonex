@@ -315,3 +315,4 @@ directions: (1) real fills price fees exactly as modeled; (2) removing fees
 in simulation leaves every config negative; (3) a REAL fee-free era existed
 on 15m and the shape lost there too. The scalp's loss is structural
 (adverse selection / martingale touch identity), not a fee artifact.
+2026-07-05: windows 1920, pass 28, tape pnl $+4.23
