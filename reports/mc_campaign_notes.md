@@ -268,3 +268,27 @@ retail-visible information.
 2026-07-02: windows 1920, pass 32, tape pnl $-19.77
 2026-07-03: windows 1920, pass 24, tape pnl $-5.85
 2026-07-04: windows 1920, pass 32, tape pnl $+29.14
+
+## Zero-fee counterfactual of the user's scalp (2026-07-11)
+
+User challenged the fee model ("are you sure you are not over-pricing fees?").
+Two answers, both conclusive:
+
+1. **Fee audit vs reality** (previous entry): 2,426,954 real on-chain fills at
+   45-55c, 100% fee-bearing, implied r median 0.0700 = formula exactly
+   (p90 0.0763 — model slightly under-charges if anything).
+
+2. **Zero-fee counterfactual** (results/nix_scalp_5m_zerofee.parquet, same
+   611,712 trade-rows, rate forced to 0): **every one of the 18 configs is
+   still negative.** Best zero-fee shape = user's exact config (taker 51c,
+   t0=-10s, 10s stop): -$0.270/trade vs -$0.810 with fees. Decomposition of
+   the $0.81 loss: ~$0.54 fees (entry + stop taker legs), ~$0.27 spread +
+   adverse selection. Maker-entry + hold rows are identical in both tables
+   (maker legs already fee-free) — internal consistency check passes.
+   Momentum-directing by m300 sign changes nothing (-$0.275 vs -$0.270 blind).
+
+Verdict: fees are NOT the reason the scalp loses. Even on a zero-fee venue
+the shape loses ~27c per $10 trade to adverse selection: the +4c TP fills
+only 40% of the time vs the 77.8% breakeven the 10s-stop shape needs, and
+resting-maker entries are filled precisely when the market moves against you
+(maker50 zero-fee -$0.49 < taker51 zero-fee -$0.27).
