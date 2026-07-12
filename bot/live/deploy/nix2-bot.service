@@ -1,0 +1,17 @@
+[Unit]
+Description=nix2 cheap+signal paper bot (BTC 5m)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# EDIT these two lines for your box:
+WorkingDirectory=/home/YOURUSER/polybtctelonex
+ExecStart=/home/YOURUSER/polybtctelonex/.venv/bin/python bot/live/nix2_live.py --venue coinbase --stake 10 --account paper1
+Restart=always
+RestartSec=5
+# LIVE mode later: add --live and put the key in the environment file below.
+# EnvironmentFile=/home/YOURUSER/polybtctelonex/.env   # holds PM_PRIVATE_KEY (never in git)
+
+[Install]
+WantedBy=multi-user.target
