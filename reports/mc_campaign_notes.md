@@ -532,3 +532,26 @@ The operational skip-thin rule (only trade fillable windows) IMPROVES the edge
 because thin windows overlap the toxic deep-discount tail. Small-capacity edge:
 ~7.6 trades/day 5m at $10 = ~$7/day EV. STILL: not pre-registered (discount p),
 5m-recent-era only, needs a clean forward one-shot on days > Jul 8.
+
+## Cheap+signal across all 5 coins (2026-07-12, coin_cheapsig.py) — Apr2-May12, 5m
+
+Re-downloaded ETH/SOL/XRP/BNB/DOGE book (full, pre-open) + coin Binance ticks,
+applied the FROZEN BTC rule (ask<0.50 & |z|>=0.05, hold). Fee ~0.07 (slightly
+optimistic vs 0.072 pre-May-7). Daily-EV t-test, 41 days.
+
+  coin   n    wr     EV/tr   daily_t   p
+  eth   381  54.1%  +$1.15   +1.47   0.149   positive hint, NOT significant
+  sol   573  49.7%  +$0.03   -0.03   0.974   dead
+  xrp   408  47.1%  -$0.54   -0.58   0.567   negative
+  bnb   104  57.7%  +$1.55   +1.56   0.131   positive hint, tiny n
+  doge  442  46.8%  -$0.63   -1.14   0.262   negative
+  POOL 1908  49.8%  +$0.06   +0.12   0.902   FLAT (positives & negatives cancel)
+  BTC*  386  52.3%  +$0.85   +2.00   0.052   (*same Apr-May window, reference)
+
+VERDICT: the cheap+signal edge does NOT robustly generalize. BTC is the edge;
+ETH shows a positive hint of comparable magnitude (+$1.15/tr) but insignificant
+on 41 days; BNB positive but n=104; SOL flat; XRP/DOGE negative. Pooling all
+coins is FLAT — you cannot blindly run all 5. Scaling lever is BTC + ETH (maybe
+BNB), i.e. ~2-3x BTC alone, NOT 5x. Refined rule same picture. Deploy candidates:
+BTC (confirmed-ish, t=2.98 full sample), ETH (worth paper-testing to grow n).
+Do NOT deploy SOL/XRP/DOGE.
