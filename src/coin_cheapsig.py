@@ -36,11 +36,12 @@ COINS = [("eth", "ETHUSDT"), ("sol", "SOLUSDT"), ("xrp", "XRPUSDT"),
 FAM, DUR = "5m", 300
 BLAT = 150_000
 LAT = 250_000
-# extended dev: full coin 5m history (eth/sol/xrp from Dec 18; bnb/doge from
-# Mar 13 — each coin only has windows where its market existed) through May 12
-# (pre-holdout). Spans Dec-May = multiple regimes, ~3.5x the first 41-day test.
-DATES = [(dt.date(2025, 12, 18) + dt.timedelta(days=i)).isoformat()
-         for i in range((dt.date(2026, 5, 12) - dt.date(2025, 12, 18)).days + 1)]
+# LAST ~3 MONTHS (Apr 2 - Jul 8): tests whether the alts' cheap+signal edge is
+# alive RECENTLY. Alts decay ~2mo after BTC, so their edge (if any) may live in
+# May-Jul when BTC's died. Frozen rule -> this is OOS validation, not fitting.
+# Apr2-May12 cached; only May13-Jul8 downloads new.
+DATES = [(dt.date(2026, 4, 2) + dt.timedelta(days=i)).isoformat()
+         for i in range((dt.date(2026, 7, 8) - dt.date(2026, 4, 2)).days + 1)]
 
 
 def sh(cmd: str) -> int:
