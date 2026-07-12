@@ -50,12 +50,10 @@ def log(account: str, rec: dict) -> None:
 
 
 async def trade_window(feed: SpotFeed, execu: pm.Executor, stake: float,
-                       account: str, live: bool) -> None:
-    now = int(time.time() * 1_000_000)
-    B = next_boundary_us(now)
+                       account: str, live: bool, B: int) -> None:
     T0 = B + T0_OFF_US
-    # sleep until decision time
-    await asyncio.sleep(max(0.0, (T0 - now) / 1e6))
+    # sleep until decision time (0.5s before open)
+    await asyncio.sleep(max(0.0, (T0 - int(time.time() * 1_000_000)) / 1e6))
     rec = {"ts": dt.datetime.utcnow().isoformat(), "B": B, "decision": "skip",
            "live": live, "reason": None}
 
@@ -129,9 +127,16 @@ async def main() -> None:
     print(f"nix2 bot up: venue={args.venue} stake=${args.stake} "
           f"account={args.account} mode={'LIVE' if args.live else 'PAPER'}")
     print("warming up feed (~5 min for the 300s vol window)...")
+    last_B = 0
     while True:
         try:
-            await trade_window(feed, execu, args.stake, args.account, args.live)
+            now = int(time.time() * 1_000_000)
+            B = next_boundary_us(now)
+            if B == last_B:                       # already handled this window
+                await asyncio.sleep(max(0.5, (B + 1_000_000 - now) / 1e6))
+                continue
+            last_B = B
+            await trade_window(feed, execu, args.stake, args.account, args.live, B)
         except Exception as e:
             print(f"[loop] {e}")
             await asyncio.sleep(2.0)
