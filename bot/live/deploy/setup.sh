@@ -26,6 +26,7 @@ Wants=network-online.target
 
 [Service]
 Type=simple
+Environment=PYTHONUNBUFFERED=1
 WorkingDirectory=$DIR
 ExecStart=$DIR/.venv/bin/python bot/live/nix2_live.py --venue coinbase --stake 10 --account paper1
 Restart=always
