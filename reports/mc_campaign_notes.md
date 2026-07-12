@@ -555,3 +555,29 @@ coins is FLAT — you cannot blindly run all 5. Scaling lever is BTC + ETH (mayb
 BNB), i.e. ~2-3x BTC alone, NOT 5x. Refined rule same picture. Deploy candidates:
 BTC (confirmed-ish, t=2.98 full sample), ETH (worth paper-testing to grow n).
 Do NOT deploy SOL/XRP/DOGE.
+
+## Coin cheap+signal, FULL Apr2-Jul8 (2026-07-12) — 95 days, per-month + recent OOS
+
+Extended the test (user challenge: 41 days wasn't enough). Now 95 days incl. the
+May13-Jul8 window where the alt-decay-lag hypothesis predicted the alts might
+carry the edge after BTC's died. Fee ~0.07.
+
+FULL Apr-Jul per coin (cheap+signal ask<0.50 & |z|>=0.05, $10 hold):
+  eth  n=873  wr49.8% EV+$0.19 t+0.48   flat
+  sol  n=1255 wr49.5% EV-$0.07 t-0.58   flat
+  xrp  n=795  wr49.3% EV-$0.12 t-0.07   flat
+  bnb  n=139  wr52.5% EV+$0.51 t+0.09   noisy, tiny n
+  doge n=653  wr46.2% EV-$0.77 t-2.12   SIGNIFICANTLY NEGATIVE
+
+PER-MONTH: the alt-lag hypothesis is FALSE. eth's edge was in APRIL (+$0.90
+t=2.26) and DIED May->Jul (-$0.57,-$0.78) — same arc as BTC, no 2mo lag. bnb
+Apr +$2.13(t2.86) then May -$3.71 = fluke. sol/xrp/doge no consistent month.
+RECENT May13-Jul8 (OOS): ALL flat-to-negative (eth-0.55, sol-0.16, xrp+0.33,
+bnb-2.57, doge-1.06). Nothing alive recently on any coin.
+
+VERDICT (now well-supported, not premature): cheap+signal is BTC-specific. No
+alt carries it over 95 days, and none revives in the recent window. "Do not
+deploy SOL/XRP/DOGE" now stands on real data. SOBERING: eth (BTC's closest
+cousin) shows the SAME Apr-peak-then-decay arc, so the cheap+signal family may
+be a fading regime — BTC's own edge must be re-checked forward (post-Jul-8
+one-shot) before trusting it; the alts dying in Jun-Jul is a warning it may too.
