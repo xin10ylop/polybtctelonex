@@ -27,41 +27,54 @@ def _get(url: str) -> dict | list:
         return json.load(r)
 
 
+def _parse_market(m: dict) -> dict | None:
+    slug = m.get("slug") or ""
+    try:
+        boundary = int(slug.rsplit("-", 1)[1])
+    except (ValueError, IndexError):
+        return None
+    toks = m.get("clobTokenIds")
+    if isinstance(toks, str):
+        toks = json.loads(toks)
+    if not toks or len(toks) != 2:
+        return None
+    return {
+        "slug": slug,
+        "open_ts_us": boundary * 1_000_000,
+        "up_token": toks[0],
+        "down_token": toks[1],
+        "min_size": float(m.get("orderMinSize") or 5),
+        "tick": float(m.get("orderPriceMinTickSize") or 0.01),
+        "accepting": bool(m.get("acceptingOrders", True)),
+    }
+
+
 def find_btc_5m_market(target_open_us: int | None = None) -> dict | None:
-    """Return {open_ts_us, up_token, down_token, min_size, tick, slug} for the
-    BTC 5m up/down market whose boundary matches target_open_us (slug encodes
-    the unix boundary: btc-updown-5m-<unix>). If target is None, the nearest
-    future one. None if not found."""
-    data = _get(f"{GAMMA}/markets?closed=false&limit=500&order=startDate&ascending=false")
-    tgt = None if target_open_us is None else target_open_us // 1_000_000
-    best = None
+    """Return the BTC 5m up/down market for `target_open_us`, fetched by EXACT
+    slug (btc-updown-5m-<unix_open>). Polymarket pre-creates ~a day of these, so
+    a list+filter query silently drops the near-term window past its 500 limit;
+    a direct slug lookup is deterministic. If target is None, fall back to the
+    nearest future one via the list query."""
+    if target_open_us is not None:
+        b = target_open_us // 1_000_000
+        for cand_b in (b, b + 300, b - 300):   # small fallback for boundary drift
+            try:
+                r = _get(f"{GAMMA}/markets?slug=btc-updown-5m-{cand_b}")
+            except Exception:
+                continue
+            if r:
+                pm = _parse_market(r[0])
+                if pm:
+                    return pm
+        return None
+    # target None: nearest upcoming from the ascending list
+    data = _get(f"{GAMMA}/markets?closed=false&limit=500&order=endDate&ascending=true")
     for m in data:
-        slug = (m.get("slug") or "").lower()
-        if not slug.startswith("btc-updown-5m-"):
-            continue
-        try:
-            boundary = int(slug.rsplit("-", 1)[1])
-        except ValueError:
-            continue
-        toks = m.get("clobTokenIds")
-        if isinstance(toks, str):
-            toks = json.loads(toks)
-        if not toks or len(toks) != 2:
-            continue
-        cand = {
-            "slug": m.get("slug"),
-            "open_ts_us": boundary * 1_000_000,
-            "up_token": toks[0],
-            "down_token": toks[1],
-            "min_size": float(m.get("orderMinSize") or 5),
-            "tick": float(m.get("orderPriceMinTickSize") or 0.01),
-        }
-        if tgt is None:
-            if best is None or boundary < best[0]:
-                best = (boundary, cand)
-        elif boundary == tgt:
-            return cand
-    return best[1] if best else None
+        if (m.get("slug") or "").startswith("btc-updown-5m-"):
+            pm = _parse_market(m)
+            if pm:
+                return pm
+    return None
 
 
 def top_of_book(token_id: str) -> tuple[float, float] | None:

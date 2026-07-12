@@ -56,42 +56,51 @@ async def trade_window(feed: SpotFeed, execu: pm.Executor, stake: float,
     T0 = B + T0_OFF_US
     # sleep until decision time
     await asyncio.sleep(max(0.0, (T0 - now) / 1e6))
+    rec = {"ts": dt.datetime.utcnow().isoformat(), "B": B, "decision": "skip",
+           "live": live, "reason": None}
+
+    def emit(reason=None, **extra):
+        rec.update(extra)
+        if reason:
+            rec["reason"] = reason
+        print(f"[{account}] {rec['decision']} B={time.strftime('%H:%M', time.gmtime(B/1e6))} "
+              f"reason={rec.get('reason')} z={rec.get('z')} ask={rec.get('ask')} "
+              f"depth={rec.get('depth_usd')}", flush=True)
+        log(account, rec)
+
     if not feed.ready():
-        return
+        return emit("feed_warming", feed_n=len(feed.ts))
     sig = feed.signal(T0)
     if sig is None:
-        return
+        return emit("no_signal")
     g, z = sig
     side = "up" if g > 0 else "down"
-    # discover the market + signal-side token
-    mkt = None
+    rec.update({"g_bp": round(g, 3), "z": round(z, 4), "side": side})
     try:
         mkt = pm.find_btc_5m_market(B)
     except Exception as e:
-        log(account, {"B": B, "err": f"discover {e}"}); return
+        return emit(f"discover_err:{e}")
     if not mkt:
-        return
+        return emit("no_market")
     token = mkt["up_token"] if side == "up" else mkt["down_token"]
     tob = pm.top_of_book(token)
     ask, depth = (tob if tob else (None, 0.0))
-    ok = (ask is not None and ASK_MIN <= ask <= ASK_MAX
-          and Z_MIN <= abs(z) < Z_MAX and depth >= stake
-          and stake >= mkt["min_size"])
-    rec = {"ts": dt.datetime.utcnow().isoformat(), "B": B, "slug": mkt["slug"],
-           "g_bp": round(g, 3), "z": round(z, 4), "side": side,
-           "ask": ask, "depth_usd": round(depth, 1), "stake": stake,
-           "decision": "TRADE" if ok else "skip", "live": live}
-    if ok:
-        # fill just before open
-        await asyncio.sleep(max(0.0, (B + FILL_OFF_US - int(time.time() * 1e6)) / 1e6))
-        fill = execu.buy(token, ask, stake, mkt["tick"])
-        rec["fill"] = fill
-        rec["resolves_at"] = (B + DUR_S * 1_000_000)
-        print(f"[{account}] TRADE {side} {mkt['slug']} ask={ask} z={z:+.3f} "
-              f"depth=${depth:.0f} {'LIVE' if live else 'paper'}")
-    else:
-        print(f"[{account}] skip z={z:+.3f} side={side} ask={ask} depth=${depth:.0f}")
-    log(account, rec)
+    rec.update({"slug": mkt["slug"], "ask": ask, "depth_usd": round(depth, 1),
+                "stake": stake})
+    if ask is None:
+        return emit("no_book")
+    if not (Z_MIN <= abs(z) < Z_MAX):
+        return emit("z_gate")
+    if not (ASK_MIN <= ask <= ASK_MAX):
+        return emit("ask_gate")
+    if depth < stake or stake < mkt["min_size"]:
+        return emit("thin_book")
+    # all gates pass -> TRADE
+    rec["decision"] = "TRADE"
+    await asyncio.sleep(max(0.0, (B + FILL_OFF_US - int(time.time() * 1e6)) / 1e6))
+    rec["fill"] = execu.buy(token, ask, stake, mkt["tick"])
+    rec["resolves_at"] = B + DUR_S * 1_000_000
+    emit()
 
 
 async def main() -> None:
