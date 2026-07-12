@@ -17,7 +17,23 @@ python3 -m venv .venv
 .venv/bin/pip install -r bot/live/requirements.txt
 
 # 3) install the bot as a service (auto-restart, survives reboot)
-sed "s/YOURUSER/$USER/g" bot/live/deploy/nix2-bot.service | sudo tee /etc/systemd/system/nix2-bot.service >/dev/null
+#    use the REAL repo path ($DIR) — root's home is /root, not /home/root
+sudo tee /etc/systemd/system/nix2-bot.service >/dev/null <<EOF
+[Unit]
+Description=nix2 cheap+signal paper bot (BTC 5m)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=$DIR
+ExecStart=$DIR/.venv/bin/python bot/live/nix2_live.py --venue coinbase --stake 10 --account paper1
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
 sudo systemctl daemon-reload
 sudo systemctl enable --now nix2-bot
 
