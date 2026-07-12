@@ -581,3 +581,20 @@ deploy SOL/XRP/DOGE" now stands on real data. SOBERING: eth (BTC's closest
 cousin) shows the SAME Apr-peak-then-decay arc, so the cheap+signal family may
 be a fading regime — BTC's own edge must be re-checked forward (post-Jul-8
 one-shot) before trusting it; the alts dying in Jun-Jul is a warning it may too.
+
+## Per-coin RE-OPTIMIZATION with train/val discipline (2026-07-12)
+
+User: "with adjustments you can make it work for the coins." Tried rigorously:
+per coin, swept ask band (lo 0/.3/.4, hi .45-.60), |z| gate (0/.05/.15),
+direction (signal vs fade); picked best-EV config on TRAIN(Apr-May), tested the
+SAME config on VALIDATION(Jun-Jul). CAUGHT A FALSE POSITIVE: ETH fade looked
+like it held OOS (t=2.4) but that used a fade PRICING BUG (bought winning
+outcome at the cheap side's ask). Corrected (fade entry = 1 - signal_ask = the
+expensive mirror side): ETH fade TRAIN -$0.18 / VAL -$0.04 = dead breakeven.
+ETH cheap+signal: TRAIN +$0.66 but VAL -$0.73 (overfit/decay). SOL/XRP/BNB/DOGE
+all fail OOS. NO coin, NO adjustment survives validation. Why tuning can't fix
+it: OOS (Jun-Jul) win rates are ~50% for all coins regardless of gate — there
+is no signal to sharpen, so re-tuning only relabels noise. (Note: coins DID
+have a different, real edge — the final-seconds nix1 nowcast, Apr +$86/May
++$220/day per mc_judge — also dead since June.) Verdict stands: cheap+signal is
+BTC-only; no live coin edge by any strategy now.
