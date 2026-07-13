@@ -79,17 +79,34 @@ def find_btc_5m_market(target_open_us: int | None = None) -> dict | None:
 
 def top_of_book(token_id: str) -> tuple[float, float] | None:
     """(best_ask_price, ask_size_usd) for a token, from the public CLOB book."""
+    s = book_summary(token_id)
+    return (s["ask"], s["ask_usd"]) if s else None
+
+
+def book_summary(token_id: str) -> dict | None:
+    """Both sides of a token's ToB: {ask, ask_usd, bid, bid_usd, q_imb}.
+    q_imb = (bid$ - ask$)/(bid$ + ask$) at the touch — negative means the book
+    leans AWAY from this token (more sellers resting), the research's
+    mispricing fingerprint (v2 gate: q_imb < -0.05)."""
     try:
         b = _get(f"{CLOB}/book?token_id={token_id}")
     except Exception:
         return None
     asks = b.get("asks") or []
+    bids = b.get("bids") or []
     if not asks:
         return None
-    # CLOB returns asks ascending? normalize: best ask = min price
-    best = min(asks, key=lambda a: float(a["price"]))
-    px = float(best["price"]); sz = float(best["size"])
-    return px, px * sz  # (price, $ resting at touch)
+    ba = min(asks, key=lambda a: float(a["price"]))
+    ask = float(ba["price"]); ask_usd = ask * float(ba["size"])
+    if bids:
+        bb = max(bids, key=lambda a: float(a["price"]))
+        bid = float(bb["price"]); bid_usd = bid * float(bb["size"])
+    else:
+        bid, bid_usd = None, 0.0
+    tot = bid_usd + ask_usd
+    q = (bid_usd - ask_usd) / tot if tot > 0 else None
+    return {"ask": ask, "ask_usd": ask_usd, "bid": bid, "bid_usd": bid_usd,
+            "q_imb": round(q, 4) if q is not None else None}
 
 
 class Executor:

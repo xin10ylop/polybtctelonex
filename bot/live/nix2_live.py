@@ -50,7 +50,8 @@ def log(account: str, rec: dict) -> None:
 
 
 async def trade_window(feed: SpotFeed, execu: pm.Executor, stake: float,
-                       account: str, live: bool, B: int) -> None:
+                       account: str, live: bool, B: int,
+                       qimb_max: float | None = None) -> None:
     T0 = B + T0_OFF_US
     # sleep until decision time (0.5s before open)
     await asyncio.sleep(max(0.0, (T0 - int(time.time() * 1_000_000)) / 1e6))
@@ -81,10 +82,12 @@ async def trade_window(feed: SpotFeed, execu: pm.Executor, stake: float,
     if not mkt:
         return emit("no_market")
     token = mkt["up_token"] if side == "up" else mkt["down_token"]
-    tob = pm.top_of_book(token)
-    ask, depth = (tob if tob else (None, 0.0))
+    bs = pm.book_summary(token)
+    ask = bs["ask"] if bs else None
+    depth = bs["ask_usd"] if bs else 0.0
+    q_imb = bs.get("q_imb") if bs else None
     rec.update({"slug": mkt["slug"], "ask": ask, "depth_usd": round(depth, 1),
-                "stake": stake})
+                "q_imb": q_imb, "stake": stake})
     if ask is None:
         return emit("no_book")
     if not (Z_MIN <= abs(z) < Z_MAX):
@@ -93,6 +96,8 @@ async def trade_window(feed: SpotFeed, execu: pm.Executor, stake: float,
         return emit("ask_gate")
     if depth < stake or stake < mkt["min_size"]:
         return emit("thin_book")
+    if qimb_max is not None and (q_imb is None or q_imb >= qimb_max):
+        return emit("qimb_gate")   # v2: require book leaning AWAY (q_imb < max)
     # all gates pass -> TRADE
     rec["decision"] = "TRADE"
     await asyncio.sleep(max(0.0, (B + FILL_OFF_US - int(time.time() * 1e6)) / 1e6))
@@ -105,6 +110,9 @@ async def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--venue", default="binanceus", help="binance|binanceus|coinbase")
     ap.add_argument("--stake", type=float, default=10.0)
+    ap.add_argument("--qimb-max", type=float, default=None,
+                    help="v2 gate: only trade if signal-side book q_imb < this "
+                         "(e.g. -0.05 = book must lean away). Default off (v1).")
     ap.add_argument("--account", default="paper1")
     ap.add_argument("--live", action="store_true")
     args = ap.parse_args()
@@ -136,7 +144,8 @@ async def main() -> None:
                 await asyncio.sleep(max(0.5, (B + 1_000_000 - now) / 1e6))
                 continue
             last_B = B
-            await trade_window(feed, execu, args.stake, args.account, args.live, B)
+            await trade_window(feed, execu, args.stake, args.account, args.live,
+                               B, args.qimb_max)
         except Exception as e:
             print(f"[loop] {e}")
             await asyncio.sleep(2.0)

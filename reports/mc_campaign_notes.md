@@ -598,3 +598,19 @@ is no signal to sharpen, so re-tuning only relabels noise. (Note: coins DID
 have a different, real edge — the final-seconds nix1 nowcast, Apr +$86/May
 +$220/day per mc_judge — also dead since June.) Verdict stands: cheap+signal is
 BTC-only; no live coin edge by any strategy now.
+
+## v2 improvement research (2026-07-13) — disciplined, forward test untouched
+
+4 candidate filters on the refined 5m cell (train Feb-Mar / val Apr-May) + 1
+exit variant on the tape:
+- book-leans-away (q_imb<-0.05): SURVIVES both halves (53.6/50.8 train,
+  59.0/54.8 val, EV ~2x/trade) — mechanism = crowd piled other side. -> V2.
+- tight-spread: sign flips train/val -> noise, rejected.
+- z sub-band [.05,.10): no val lift -> rejected.
+- hour-of-day: sign flips -> rejected.
+- late-TP 0.95 maker exit: EV identical to hold (+1.016 vs +1.013), sd 9.90
+  vs 10.49 — martingale optional-stopping confirmed empirically; rejected
+  (complexity for nothing).
+Bot: book_summary() (bid+ask+q_imb, live-verified mirror-consistent), q_imb
+now logged on every decision (v1 diagnostics unchanged), --qimb-max flag =
+v2 gate. v2 pre-registered in bot/cheapsig.json; runs as parallel paper2.
