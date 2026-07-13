@@ -1,13 +1,37 @@
 # PROGRESS — Polymarket BTC Up/Down Strategy Discovery
 
-**LATEST (2026-07-11): Appendix 11 DONE — multicoin campaign complete (97/97
+**CURRENT STATE (2026-07-13) — READ THIS FIRST IN A NEW SESSION:**
+- **The surviving strategy is "cheap+signal" (nix2)**, frozen in `bot/cheapsig.json`
+  (v1 + pre-registered v2 with the book-imbalance gate). Buy the underpriced BTC 5m
+  side (ask .44-.50) when the 1s pre-boundary Binance move confirms it (|z| .05-.40),
+  depth >= stake, HOLD to resolution. In-sample: 53% wr, +9.2%/trade at $10
+  skip-thin, daily t=2.98 (90 days Feb-May). BTC-ONLY: tested on eth/sol/xrp/bnb/doge
+  over 95 days (results/coincs/) — no alt carries it, no adjustment survives
+  train/val (reports/mc_campaign_notes.md tail has the full audit trail).
+- **TWO PAPER BOTS RUN 24/7 on the USER'S VPS** (not in any Claude container):
+  `bot/live/` (nix2_live.py, pm.py, feeds.py, settle.py, deploy/). paper1 = v1
+  frozen rule; paper2 = v2 (--qimb-max -0.05). Forward verdict bar: total>0,
+  daily t>=2.0, >=20 trade-days. DO NOT change these rules mid-test — check
+  results only via the user pasting settle.py output from the VPS.
+- **DERIVED DATA (committed, ready for analysis without ANY download):**
+  results/nix_scalp6_rows.parquet (44k BTC 5m/15m boundary rows w/ features),
+  results/coincs/ (5 alts x 98 days), results/mc/ (multicoin final-seconds
+  campaign), results/nix_scalp*.parquet, results/nixflow|xtf|preopen stores.
+- **RAW DATA (data/) IS GONE in a fresh container** — gitignored, never committed.
+  Re-download per-day ONLY if tape-level work is needed: Binance from
+  binance.vision (free, src/mc_campaign.py binance_aggtrades), Telonex via
+  src/download_day.py + src/consolidate.py (needs TELONEX_API_KEY in .env —
+  user must re-create .env; NEVER print the key).
+- Earlier program: FINAL_REPORT.md Appendices 1-11 (main verdict: zero grid
+  survivors; nix1 final-seconds edge holdout-passed then decayed to fee floor
+  everywhere by July). HOLDOUT SPENT — never read data/HOLDOUT.
+
+**Previous LATEST (2026-07-11): Appendix 11 — multicoin campaign complete (97/97
 days, results/mc/, src/mc_campaign.py + src/mc_judge.py). Registered deploy
 bar FAILED (frozen stack -$0.31/day on unseen Jun1-Jul7, t=-0.18): NO DEPLOY.
 Post-mortem: the BTC-fit calibration gate inverted selection on alts (blocks
 rich asks that win .95, keeps dead cheap bucket); basis guard behaved.
-NEWLY PRE-REGISTERED one-shot (untested): raw frozen signal + basis guard,
-NO cal gate, $5 ToB; validate ONLY on days > 2026-07-07; bar = positive,
-daily t>=2, >=20 trade-days. Scalp question closed 3 ways (fee audit vs 2.4M
+Scalp question closed 3 ways (fee audit vs 2.4M
 fills exact; zero-fee counterfactual all-negative; REAL fee-free 15m era
 all-negative) — reports/mc_campaign_notes.md.**
 
