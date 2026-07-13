@@ -25,6 +25,10 @@ import os
 import sys
 
 ROOTS = ["data/processed/daily", "data/processed/coin_prices"]
+FILES = ["data/processed/windows.parquet"]
+# fills excluded: only used by the (completed, documented) fee audits and
+# re-downloadable any time; keeps the vault inside B2's 10GB free tier.
+EXCLUDE_PARTS = {"fills"}
 
 
 def _env(k: str) -> str:
@@ -66,17 +70,20 @@ def upload() -> None:
     s3 = client(); bucket = _env("DS_BUCKET")
     have = remote_index(s3, bucket)
     n = skipped = 0
+    todo = [p for p in FILES if os.path.exists(p)]
     for root in ROOTS:
         for dirpath, _, files in os.walk(root):
-            for f in sorted(files):
-                p = os.path.join(dirpath, f)
-                sz = os.path.getsize(p)
-                if have.get(p) == sz:
-                    skipped += 1; continue
-                s3.upload_file(p, bucket, p)
-                n += 1
-                if n % 25 == 0:
-                    print(f"  uploaded {n} (skipped {skipped})", flush=True)
+            if EXCLUDE_PARTS & set(dirpath.split(os.sep)):
+                continue
+            todo += [os.path.join(dirpath, f) for f in sorted(files)]
+    for p in todo:
+        sz = os.path.getsize(p)
+        if have.get(p) == sz:
+            skipped += 1; continue
+        s3.upload_file(p, bucket, p)
+        n += 1
+        if n % 25 == 0:
+            print(f"  uploaded {n} (skipped {skipped})", flush=True)
     print(f"DONE: uploaded {n}, skipped {skipped} already-present")
 
 
