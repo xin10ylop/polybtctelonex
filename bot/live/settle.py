@@ -81,14 +81,24 @@ def main() -> None:
     if n == 0:
         print(f"{len(trades)} trades logged, {pending} pending resolution, "
               f"none resolved yet"); return
+    # day-clustered mean of per-trade EV (the pre-registered t-stat basis)
     daily = [sum(v) / len(v) for v in by_day.values()]
     mean = sum(daily) / len(daily)
     sd = math.sqrt(sum((d - mean) ** 2 for d in daily) / (len(daily) - 1)) if len(daily) > 1 else 0.0
     tstat = mean / (sd / math.sqrt(len(daily))) if sd > 0 else float("nan")
+    # actual dollars earned per trading day (what "per day" really means)
+    per_day = tot / len(by_day)
+    # per-trade t, unclustered — reported alongside as the conservative check
+    allp = [p for v in by_day.values() for p in v]
+    m2 = sum(allp) / len(allp)
+    sd2 = math.sqrt(sum((p - m2) ** 2 for p in allp) / (len(allp) - 1)) if len(allp) > 1 else 0.0
+    t_trade = m2 / (sd2 / math.sqrt(len(allp))) if sd2 > 0 else float("nan")
     print(f"account {args.account}: {int(n)} resolved ({pending} pending) over "
           f"{len(by_day)} trade-days")
     print(f"  win rate {wins/n:.1%}, total ${tot:+.2f}, EV ${tot/n:+.3f}/trade")
-    print(f"  daily-EV mean ${mean:+.3f}/day, t={tstat:+.2f}")
+    print(f"  actual ${per_day:+.2f}/trading-day ({n/len(by_day):.1f} trades/day)")
+    print(f"  day-clustered mean ${mean:+.3f}/trade, t={tstat:+.2f}  "
+          f"(per-trade t={t_trade:+.2f})")
     passed = tot > 0 and tstat >= 2.0 and len(by_day) >= 20
     print(f"  verdict (bar: total>0, t>=2.0, >=20 days): "
           f"{'PASS - edge confirmed' if passed else 'accumulating...'}")
