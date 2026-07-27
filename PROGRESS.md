@@ -8,11 +8,29 @@
   skip-thin, daily t=2.98 (90 days Feb-May). BTC-ONLY: tested on eth/sol/xrp/bnb/doge
   over 95 days (results/coincs/) — no alt carries it, no adjustment survives
   train/val (reports/mc_campaign_notes.md tail has the full audit trail).
-- **TWO PAPER BOTS RUN 24/7 on the USER'S VPS** (not in any Claude container):
-  `bot/live/` (nix2_live.py, pm.py, feeds.py, settle.py, deploy/). paper1 = v1
-  frozen rule; paper2 = v2 (--qimb-max -0.05). Forward verdict bar: total>0,
-  daily t>=2.0, >=20 trade-days. DO NOT change these rules mid-test — check
-  results only via the user pasting settle.py output from the VPS.
+- **PAPER BOTS RUN 24/7 on the USER'S VPS** (165.227.83.238, NOT in any Claude
+  container). `bot/live/` = nix2_live.py, pm.py, feeds.py, risk.py, settle.py,
+  deploy/. Live accounts as of 2026-07-27:
+    paper1 = v1 frozen rule, $10, touch price, skip-thin. THE CLEAN FORWARD
+             TEST — never reset, never altered. 77 trades / 16 trade-days,
+             54.5% wr, +$85, t=1.37 (bar 2.0, ~2.5 weeks out).
+    paper4 = $50, --walk --realistic --slip-ticks 1. Max-size execution recon.
+    paper2 = RETIRED 2026-07-27 (v2 qimb gate: 48.7% wr, -$5, it selected the
+             losers — a history-fitted filter inverting live, same failure mode
+             as the Appendix 11 calibration gate). Log kept as evidence.
+  DO NOT change paper1's rule mid-test and DO NOT reset its counter (choosing a
+  start date after seeing results is the same error as v2). Check results only
+  via the user pasting settle.py output.
+- **FILL AUDIT + RISK ENGINE (2026-07-28)**, see reports/mc_campaign_notes.md:
+  edge survives 1s latency (t=2.28) and paying a full cent worse (t=3.23);
+  book unchanged 87% of the time in the 250ms decision->fill gap. CAPACITY
+  CORRECTION: the old "caps at $10-15" was a skip-thin artifact; walking the
+  book holds ~8.9% ROI to $50/trade ($40/day vs $21 skip-thin). risk.py sizing
+  = 1% of bankroll (NOT Kelly), halts on 35%-of-bankroll drawdown / 12 straight
+  losses / rolling decay t<=-1.5 over >=250 trades — calibrated so it
+  false-halts a LIVE edge only 3.7% per 800 trades (the naive setting did 38%).
+  10/10 tests in tests/test_nix2_risk.py. MONITOR-only in paper (settle.py
+  replays it); ENFORCE when real money goes live.
 - **DERIVED DATA (committed, ready for analysis without ANY download):**
   results/nix_scalp6_rows.parquet (44k BTC 5m/15m boundary rows w/ features),
   results/coincs/ (5 alts x 98 days), results/mc/ (multicoin final-seconds
