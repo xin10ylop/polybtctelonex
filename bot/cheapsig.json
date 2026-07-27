@@ -41,5 +41,20 @@
   "evidence": "train Feb-Mar keep 53.6% vs dropped 50.8%; val Apr-May keep 59.0% vs dropped 54.8%; EV ~2x per trade at ~half the trade count. Only candidate of 4 consistent in BOTH halves. Rejected: spread filter (sign flip), z sub-band (no val lift), hour-of-day (sign flip), late-TP 0.90/0.95 exit (EV identical to hold, negligible variance gain).",
   "deployment": "parallel paper account 'paper2' with --qimb-max -0.05; v1 test untouched",
   "bar": "same as v1: total>0 AND daily-EV t>=2.0 over >=20 trade-days, judged independently"
+ },
+ "V3_PRE_REGISTERED": {
+  "frozen": "2026-07-28",
+  "rule": "v1 signal+gates, but fill by WALKING the ask ladder instead of skipping thin books; stake $25; refuse if the walk climbs past 0.55.",
+  "why": "Fill audit (src/nix_fillaudit.py): skip-if-thin drops windows as the stake grows (596/443/314 at $10/$25/$50), which is what created the false 'capacity caps at $10-15' conclusion. Walking keeps ~100% of windows at ~8.9% ROI: $25 -> $20.04/day vs $14.35 skip-thin; $50 -> $40.09 vs $21.03. At $10 the two tie, so v1 is NOT changed.",
+  "deployment": "parallel paper account 'paper3' with --walk --stake 25; paper1 (v1) and paper2 (v2) untouched",
+  "bar": "same as v1, judged independently: total>0 AND daily t>=2.0 over >=20 trade-days"
+ },
+ "RISK_ENGINE": {
+  "module": "bot/live/risk.py (calibrated by src/nix_riskcal.py, tests/test_nix2_risk.py 10/10)",
+  "sizing": "1% of bankroll per trade, floor $5, cap $50 \u2014 NOT Kelly (8-11% tolerates ruinous drawdowns). $10 stakes therefore need ~$1000 bankroll.",
+  "halts": "drawdown >= 35% of bankroll; 12 consecutive losses; rolling decay t <= -1.5 over >=250 trades (window 400)",
+  "pause": "daily loss >= 12 stakes, clears at UTC midnight",
+  "calibration": "decay detector false-halts a LIVE edge 3.7% per 800 trades (the naive t<-1.5/n>=60/window120 setting did so 38% of the time); catches a -$0.50/trade dead edge 78-94% of the time, median ~335-426 trades",
+  "status": "MONITOR ONLY during the paper test (settle.py replays it and reports state); ENFORCE when real money goes live"
  }
 }

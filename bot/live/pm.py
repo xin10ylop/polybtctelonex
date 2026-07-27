@@ -106,7 +106,28 @@ def book_summary(token_id: str) -> dict | None:
     tot = bid_usd + ask_usd
     q = (bid_usd - ask_usd) / tot if tot > 0 else None
     return {"ask": ask, "ask_usd": ask_usd, "bid": bid, "bid_usd": bid_usd,
-            "q_imb": round(q, 4) if q is not None else None}
+            "q_imb": round(q, 4) if q is not None else None,
+            "_asks": [(float(a["price"]), float(a["size"])) for a in asks]}
+
+
+def walk_price(asks: list[tuple[float, float]], usd: float) -> tuple[float, float]:
+    """Average price to buy `usd` of notional by walking the ask ladder.
+
+    Returns (avg_price, usd_filled). The fill audit measured this costs ~0.4c
+    median vs the touch, and keeps ~100% of signal windows tradeable instead
+    of the 74% that skip-if-thin allows — which is what makes stakes above
+    ~$10 scale (see reports/mc_campaign_notes.md, FILL AUDIT).
+    """
+    spent = shares = 0.0
+    for px, sz in sorted(asks, key=lambda a: a[0]):
+        if spent >= usd - 1e-9:
+            break
+        take = min(px * sz, usd - spent)
+        shares += take / px
+        spent += take
+    if shares <= 0:
+        return float("nan"), 0.0
+    return spent / shares, spent
 
 
 class Executor:

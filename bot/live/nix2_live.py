@@ -33,6 +33,7 @@ import pm
 ASK_MIN, ASK_MAX = 0.44, 0.4999
 Z_MIN, Z_MAX = 0.05, 0.40
 T0_OFF_US = -500_000     # decide 0.5s before open
+WALK_MAX_PX = 0.55       # v3: refuse a walk that climbs past this
 FILL_OFF_US = -250_000   # fill 0.25s before open
 DUR_S = 300
 
@@ -51,7 +52,7 @@ def log(account: str, rec: dict) -> None:
 
 async def trade_window(feed: SpotFeed, execu: pm.Executor, stake: float,
                        account: str, live: bool, B: int,
-                       qimb_max: float | None = None) -> None:
+                       qimb_max: float | None = None, walk: bool = False) -> None:
     T0 = B + T0_OFF_US
     # sleep until decision time (0.5s before open)
     await asyncio.sleep(max(0.0, (T0 - int(time.time() * 1_000_000)) / 1e6))
@@ -94,14 +95,27 @@ async def trade_window(feed: SpotFeed, execu: pm.Executor, stake: float,
         return emit("z_gate")
     if not (ASK_MIN <= ask <= ASK_MAX):
         return emit("ask_gate")
-    if depth < stake or stake < mkt["min_size"]:
+    if stake < mkt["min_size"]:
+        return emit("below_min_size")
+    # fill price: touch (v1/v2) or walk the ladder (v3 — keeps thin windows
+    # tradeable, which is what lets stakes above ~$10 scale; fill audit)
+    fill_px = ask
+    if walk:
+        wp, filled = pm.walk_price(bs.get("_asks") or [], stake)
+        if not (wp == wp) or filled < stake * 0.99:
+            return emit("cant_fill")
+        if wp > WALK_MAX_PX:
+            return emit("walk_too_deep")
+        fill_px = round(wp, 4)
+        rec["walk_px"] = fill_px
+    elif depth < stake:
         return emit("thin_book")
     if qimb_max is not None and (q_imb is None or q_imb >= qimb_max):
         return emit("qimb_gate")   # v2: require book leaning AWAY (q_imb < max)
     # all gates pass -> TRADE
     rec["decision"] = "TRADE"
     await asyncio.sleep(max(0.0, (B + FILL_OFF_US - int(time.time() * 1e6)) / 1e6))
-    rec["fill"] = execu.buy(token, ask, stake, mkt["tick"])
+    rec["fill"] = execu.buy(token, fill_px, stake, mkt["tick"])
     rec["resolves_at"] = B + DUR_S * 1_000_000
     emit()
 
@@ -110,6 +124,9 @@ async def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--venue", default="binanceus", help="binance|binanceus|coinbase")
     ap.add_argument("--stake", type=float, default=10.0)
+    ap.add_argument("--walk", action="store_true",
+                    help="v3: fill by walking the ask ladder instead of "
+                         "skipping thin books (needed to scale past ~$10)")
     ap.add_argument("--qimb-max", type=float, default=None,
                     help="v2 gate: only trade if signal-side book q_imb < this "
                          "(e.g. -0.05 = book must lean away). Default off (v1).")
@@ -145,7 +162,7 @@ async def main() -> None:
                 continue
             last_B = B
             await trade_window(feed, execu, args.stake, args.account, args.live,
-                               B, args.qimb_max)
+                               B, args.qimb_max, args.walk)
         except Exception as e:
             print(f"[loop] {e}")
             await asyncio.sleep(2.0)

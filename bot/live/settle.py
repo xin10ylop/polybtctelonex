@@ -52,6 +52,9 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--account", default="paper1")
     ap.add_argument("-v", "--verbose", action="store_true")
+    ap.add_argument("--bankroll", type=float, default=1000.0,
+                    help="bankroll the risk-engine replay assumes")
+    ap.add_argument("--stake", type=float, default=10.0)
     args = ap.parse_args()
     try:
         trades = [json.loads(l) for l in open(f"logs/nix2_live_{args.account}.jsonl")
@@ -99,6 +102,30 @@ def main() -> None:
     print(f"  actual ${per_day:+.2f}/trading-day ({n/len(by_day):.1f} trades/day)")
     print(f"  day-clustered mean ${mean:+.3f}/trade, t={tstat:+.2f}  "
           f"(per-trade t={t_trade:+.2f})")
+    # --- risk engine replay: what would the live risk layer be doing? ---
+    try:
+        import os as _os, sys as _sys
+        _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+        from risk import RiskConfig, RiskEngine
+        eng = RiskEngine(cfg=RiskConfig(bankroll=args.bankroll))
+        blocked = 0
+        for day in sorted(by_day):
+            for p in by_day[day]:
+                ok, _r = eng.may_trade(day)
+                if not ok:
+                    blocked += 1
+                    continue
+                eng.record(p, args.stake, day)
+        st = eng.status()
+        dt_ = f"{st['decay_t']:+.2f}" if st["decay_t"] is not None else "n/a (needs 250 trades)"
+        print(f"  risk engine (bankroll ${args.bankroll:.0f}): {st['state']}"
+              f"{(' - ' + st['reason']) if st['reason'] else ''}")
+        print(f"    drawdown ${st['drawdown']:.2f} of ${RiskConfig(bankroll=args.bankroll).max_drawdown_frac*args.bankroll:.0f} limit"
+              f" | loss streak {st['streak']} of 12 | decay t {dt_}"
+              + (f" | {blocked} trades blocked" if blocked else ""))
+    except Exception as _e:
+        print(f"  risk engine: unavailable ({_e})")
+
     passed = tot > 0 and tstat >= 2.0 and len(by_day) >= 20
     print(f"  verdict (bar: total>0, t>=2.0, >=20 days): "
           f"{'PASS - edge confirmed' if passed else 'accumulating...'}")
