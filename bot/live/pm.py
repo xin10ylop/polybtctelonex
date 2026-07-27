@@ -110,16 +110,24 @@ def book_summary(token_id: str) -> dict | None:
             "_asks": [(float(a["price"]), float(a["size"])) for a in asks]}
 
 
-def walk_price(asks: list[tuple[float, float]], usd: float) -> tuple[float, float]:
+def walk_price(asks: list[tuple[float, float]], usd: float,
+               limit_px: float | None = None) -> tuple[float, float]:
     """Average price to buy `usd` of notional by walking the ask ladder.
 
-    Returns (avg_price, usd_filled). The fill audit measured this costs ~0.4c
-    median vs the touch, and keeps ~100% of signal windows tradeable instead
-    of the 74% that skip-if-thin allows — which is what makes stakes above
-    ~$10 scale (see reports/mc_campaign_notes.md, FILL AUDIT).
+    With `limit_px` this simulates a marketable LIMIT order: levels priced
+    above the limit are not taken, so the result can be a PARTIAL fill (or
+    none) — exactly what a fill-or-kill/IOC order does when the book moves
+    away between the decision and the order's arrival.
+
+    Returns (avg_price, usd_filled); avg_price is NaN when nothing fills.
+    The fill audit measured walking costs ~0.4c median vs the touch, and
+    keeps ~100% of signal windows tradeable vs the 74% that skip-if-thin
+    allows — which is what lets stakes above ~$10 scale.
     """
     spent = shares = 0.0
     for px, sz in sorted(asks, key=lambda a: a[0]):
+        if limit_px is not None and px > limit_px + 1e-9:
+            break
         if spent >= usd - 1e-9:
             break
         take = min(px * sz, usd - spent)

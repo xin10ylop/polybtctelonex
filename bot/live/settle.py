@@ -72,13 +72,16 @@ def main() -> None:
             continue
         side_won = (t["side"] == "up") == uw
         res = 1.0 if side_won else 0.0
-        px = t["fill"]["price"]; sh = t["fill"]["shares"]; stake = t["stake"]
+        px = t["fill"]["price"]; sh = t["fill"]["shares"]
+        # actual notional spent (partial fills); older records lack it
+        stake = t["fill"].get("spent", t["stake"])
         fee = 0.07 * px * (1 - px) * sh
         pnl = sh * res - stake - fee
         by_day.setdefault(t["ts"][:10], []).append(pnl)
         tot += pnl; n += 1; wins += side_won
         if args.verbose:
-            print(f"  {t['ts'][:19]} {t['side']:<4} @{px} -> "
+            part = " PARTIAL" if t.get("partial") else ""
+            print(f"  {t['ts'][:19]} {t['side']:<4} @{px} ${stake:>5.2f}{part} -> "
                   f"{'WIN ' if side_won else 'loss'} ${pnl:+.2f}")
 
     if n == 0:

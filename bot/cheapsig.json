@@ -56,5 +56,13 @@
   "pause": "daily loss >= 12 stakes, clears at UTC midnight",
   "calibration": "decay detector false-halts a LIVE edge 3.7% per 800 trades (the naive t<-1.5/n>=60/window120 setting did so 38% of the time); catches a -$0.50/trade dead edge 78-94% of the time, median ~335-426 trades",
   "status": "MONITOR ONLY during the paper test (settle.py replays it and reports state); ENFORCE when real money goes live"
+ },
+ "V4_REALISTIC_EXECUTION": {
+  "frozen": "2026-07-28",
+  "problem": "v1-v3 paper fills at the price OBSERVED at decision time (T0), which silently assumes the liquidity waited 250ms for our order. That is an optimistic simulation, not an execution test.",
+  "rule": "--realistic: at fill time RE-FETCH the book and fill against what is actually there, as a marketable LIMIT at (observed ask + 1 tick). Partial fills and no-fills are recorded honestly; P&L uses the notional ACTUALLY spent, not the intended stake.",
+  "deployment": "paper4: --stake 50 --walk --realistic --slip-ticks 1 (max size, $5000 bankroll at 1% sizing)",
+  "note": "Still cannot model OTHER bots racing us for the same liquidity \u2014 historical/live book shows what IS there, not how it reacts to us taking it repeatedly. Paper remains an UPPER BOUND at large size; only small real orders settle that.",
+  "bar": "same as v1, judged independently: total>0 AND daily t>=2.0 over >=20 trade-days"
  }
 }

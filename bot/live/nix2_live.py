@@ -52,7 +52,8 @@ def log(account: str, rec: dict) -> None:
 
 async def trade_window(feed: SpotFeed, execu: pm.Executor, stake: float,
                        account: str, live: bool, B: int,
-                       qimb_max: float | None = None, walk: bool = False) -> None:
+                       qimb_max: float | None = None, walk: bool = False,
+                       realistic: bool = False, slip_ticks: int = 1) -> None:
     T0 = B + T0_OFF_US
     # sleep until decision time (0.5s before open)
     await asyncio.sleep(max(0.0, (T0 - int(time.time() * 1_000_000)) / 1e6))
@@ -112,10 +113,33 @@ async def trade_window(feed: SpotFeed, execu: pm.Executor, stake: float,
         return emit("thin_book")
     if qimb_max is not None and (q_imb is None or q_imb >= qimb_max):
         return emit("qimb_gate")   # v2: require book leaning AWAY (q_imb < max)
-    # all gates pass -> TRADE
-    rec["decision"] = "TRADE"
+
+    # ---- execution ----
     await asyncio.sleep(max(0.0, (B + FILL_OFF_US - int(time.time() * 1e6)) / 1e6))
-    rec["fill"] = execu.buy(token, fill_px, stake, mkt["tick"])
+    if realistic:
+        # Honest simulation: our order arrives AFTER the decision, so fill it
+        # against the book as it is THEN, as a marketable limit (observed ask
+        # + slip tolerance). The book can have moved away -> partial or no
+        # fill. Anything else silently assumes the liquidity waited for us.
+        bs2 = pm.book_summary(token)
+        if not bs2 or not bs2.get("_asks"):
+            return emit("fill_no_book")
+        limit = round(ask + slip_ticks * mkt["tick"], 4)
+        avg, filled = pm.walk_price(bs2["_asks"], stake, limit_px=limit)
+        rec["limit_px"] = limit
+        rec["ask_at_fill"] = bs2["ask"]
+        if filled < mkt["min_size"]:
+            return emit("unfilled", filled_usd=round(filled, 2))
+        fill_px, spent = round(avg, 4), round(filled, 2)
+        if spent < stake * 0.99:
+            rec["partial"] = True
+    else:
+        spent = stake
+
+    rec["decision"] = "TRADE"
+    rec["fill"] = execu.buy(token, fill_px, spent, mkt["tick"])
+    rec["fill"]["spent"] = spent
+    rec["fill"]["intended"] = stake
     rec["resolves_at"] = B + DUR_S * 1_000_000
     emit()
 
@@ -127,6 +151,11 @@ async def main() -> None:
     ap.add_argument("--walk", action="store_true",
                     help="v3: fill by walking the ask ladder instead of "
                          "skipping thin books (needed to scale past ~$10)")
+    ap.add_argument("--realistic", action="store_true",
+                    help="honest execution: re-fetch the book at fill time and "
+                         "fill as a marketable limit (partial/no fill possible)")
+    ap.add_argument("--slip-ticks", type=int, default=1,
+                    help="how many cents above the observed ask the limit sits")
     ap.add_argument("--qimb-max", type=float, default=None,
                     help="v2 gate: only trade if signal-side book q_imb < this "
                          "(e.g. -0.05 = book must lean away). Default off (v1).")
@@ -162,7 +191,8 @@ async def main() -> None:
                 continue
             last_B = B
             await trade_window(feed, execu, args.stake, args.account, args.live,
-                               B, args.qimb_max, args.walk)
+                               B, args.qimb_max, args.walk,
+                               args.realistic, args.slip_ticks)
         except Exception as e:
             print(f"[loop] {e}")
             await asyncio.sleep(2.0)

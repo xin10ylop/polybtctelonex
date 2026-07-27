@@ -654,3 +654,18 @@ RISK ENGINE — two of my own bugs caught by calibration:
   Sizing is NOT Kelly (8-11% tolerates ruinous DD); 1% of bankroll, from the
   measured DD distribution (bootstrap p99 = 30 stakes). $10 stakes therefore
   need a ~$1000 bankroll (earlier "$600-800" was light). 10/10 tests pass.
+
+## REALISTIC EXECUTION (2026-07-28) — paper fills made honest
+
+Flaw found in the paper bots: they fill at the ask OBSERVED at decision time
+(T0 = B-500ms) even though the order is only submitted at B-250ms. That
+assumes the liquidity waited for us. Fixed behind --realistic:
+  - RE-FETCH the book at fill time; fill against what is actually there
+  - fill as a marketable LIMIT at observed_ask + slip_ticks (default 1c),
+    so a book that moved away gives a PARTIAL fill or NO fill
+  - pm.walk_price() gained limit_px; settle.py now uses the notional actually
+    spent (fill.spent) rather than the intended stake, and flags PARTIAL
+v1/v2/v3 unchanged (flag is opt-in) so the frozen forward test stays clean.
+REMAINING un-modellable gap: competition. The book shows what IS resting, not
+how other bots react to us repeatedly taking it. Paper stays an UPPER BOUND at
+$25-50; only small real orders can settle that.
