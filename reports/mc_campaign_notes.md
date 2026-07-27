@@ -614,3 +614,43 @@ exit variant on the tape:
 Bot: book_summary() (bid+ask+q_imb, live-verified mirror-consistent), q_imb
 now logged on every decision (v1 diagnostics unchanged), --qimb-max flag =
 v2 gate. v2 pre-registered in bot/cheapsig.json; runs as parallel paper2.
+
+## FILL AUDIT + RISK ENGINE (2026-07-28) — deployability, not alpha
+
+src/nix_fillaudit.py, bot/live/risk.py, src/nix_riskcal.py, tests/test_nix2_risk.py.
+All research on HISTORICAL data only; the 76 live forward trades were never
+tuned on (that is the only clean evidence and fitting it would burn it).
+
+FILL AUDIT (810 gated windows, 90 days). Gate on the book AS SEEN at T0,
+fill at T0+L — the live bot observes then its order arrives later:
+  latency  0ms  EV +$1.278 t=3.32 |  250ms +$1.208 t=3.70
+          500ms      +$0.911 t=2.15 | 1000ms +$0.989 t=2.28 | 2000ms +$0.832 t=1.64
+  queue risk (pay a full cent worse): 250ms +$0.969 t=3.23; 1s +$0.754 t=1.86
+  book stability T0->+250ms: 87% unchanged, mean drift +0.09c (worse 9%)
+  depth at touch: p50 $30, >= $10 in 74%, >= $25 in 55%, >= $50 in 39%
+  -> DEPLOYABLE. A VPS at 100-200ms sits far inside the safe zone, and the
+     edge survives even always missing the touch by a cent.
+
+CAPACITY — CORRECTION to the earlier "max $10-15, profit peaks $25-30" claim.
+That was an artifact of the skip-if-thin convention (it DROPS windows as the
+stake grows: 596 -> 443 -> 314). Walking the book instead keeps all 809:
+   stake   skip-thin@touch        walk-the-book (conservative walk50 price)
+   $10     $8.00/day t=3.70       $8.02/day t=2.31
+   $25     $14.35/day t=2.23      $20.04/day t=2.31
+   $50     $21.03/day t=1.56      $40.09/day t=2.31
+  ROI holds ~8.9% from $5 to $50; walk slippage median +0.39c. So capacity is
+  ~$50/trade, NOT $10-15. At $10 the two conventions tie, so NO change to the
+  running test is warranted; the walk convention matters only when scaling.
+
+RISK ENGINE — two of my own bugs caught by calibration:
+  1. drawdown halt was a stake-MULTIPLE (40 stakes) = 160% of bankroll at the
+     intended sizing: it could never fire before ruin. Now a bankroll fraction
+     (35%).
+  2. the naive decay detector (t<-1.5, n>=60, window 120) halted a genuinely
+     PROFITABLE edge 38% of the time — sequential testing, evaluated every
+     trade. Swept properly: (t<-1.5, n>=250, window 400) gives 3.7% false-halt
+     while still catching a -$0.50/tr dead edge 78-94% of the time.
+  Validated: replaying the real profitable cell -> no halt (596/596 traded).
+  Sizing is NOT Kelly (8-11% tolerates ruinous DD); 1% of bankroll, from the
+  measured DD distribution (bootstrap p99 = 30 stakes). $10 stakes therefore
+  need a ~$1000 bankroll (earlier "$600-800" was light). 10/10 tests pass.
