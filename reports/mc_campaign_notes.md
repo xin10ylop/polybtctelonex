@@ -669,3 +669,32 @@ v1/v2/v3 unchanged (flag is opt-in) so the frozen forward test stays clean.
 REMAINING un-modellable gap: competition. The book shows what IS resting, not
 how other bots react to us repeatedly taking it. Paper stays an UPPER BOUND at
 $25-50; only small real orders can settle that.
+
+## FORWARD TEST STATUS (2026-07-31) — not confirming
+
+paper1 (the clean frozen test) across three checks:
+  Jul27  77 tr / 16 d  54.5% wr  +$85  t=1.37
+  Jul28  82 tr / 17 d  53.7% wr  +$74  t=1.12
+  Jul31  95 tr / 19 d  51.6% wr  +$43  t=0.92
+Last 13 trades went 5W-8L. Still above the ~49% breakeven and the risk engine
+is calm (drawdown $52 of $350), but t is moving AWAY from the 2.0 bar.
+
+SAMPLE-SIZE CORRECTION (an error of mine, recorded so it is not repeated):
+telling the user "~2.5 weeks to a verdict" was wrong. Separating a 53% edge
+from a 50% coin flip at t=2 needs ~1100 trades ~ 7 months at 5 trades/day.
+95 trades cannot distinguish "small real edge" from "no edge" — 51.6% sits
+0.27 SE below 53% AND 0.31 SE above 50%; both hypotheses fit. The early
+t=1.37 was a lucky opening run, and I extrapolated from it. At the current
+observed effect size t=2.0 needs ~90 trade-days (~4.5 months).
+
+paper4 EXECUTION VALIDATED (21 trades, 209 windows): fill prices exactly 5x
+paper1's at $50; first PARTIAL fills appeared ($38.91, $22.78) and are priced
+on notional actually spent; two fills at 0.50 where the book moved between
+decision and order (the marketable limit absorbed it, ~$2 cost); zero
+cant_fill/unfilled/walk_too_deep. $50 is mechanically fillable; its -$82 is
+the same fading signal at 5x size, not an execution problem.
+
+VERDICT STANCE: paper1 reaches its 20-trade-day evaluation point imminently
+and will NOT clear the pre-registered bar (needs t>=2.0, has 0.92) -> NOT
+CONFIRMED. That is not "proven dead", it is "do not fund". Cost of continuing
+is zero, so keep observing, but as a months-long watch, not a countdown.

@@ -12,9 +12,28 @@
   container). `bot/live/` = nix2_live.py, pm.py, feeds.py, risk.py, settle.py,
   deploy/. Live accounts as of 2026-07-27:
     paper1 = v1 frozen rule, $10, touch price, skip-thin. THE CLEAN FORWARD
-             TEST — never reset, never altered. 77 trades / 16 trade-days,
-             54.5% wr, +$85, t=1.37 (bar 2.0, ~2.5 weeks out).
+             TEST — never reset, never altered. TRAJECTORY (declining):
+               Jul27  77 tr / 16 d  54.5% wr  +$85  t=1.37
+               Jul28  82 tr / 17 d  53.7% wr  +$74  t=1.12
+               Jul31  95 tr / 19 d  51.6% wr  +$43  t=0.92
+             Still above the ~49% breakeven, risk engine calm (DD $52/$350),
+             but every metric is sliding and t is moving AWAY from the 2.0 bar.
+             *** SAMPLE-SIZE CORRECTION (my earlier "~2.5 weeks" was WRONG) ***
+             Distinguishing a 53% edge from a 50% coin flip needs ~1100 trades
+             (~7 months at 5/day). The early t=1.37 was a lucky opening run
+             flattering the estimate. At the CURRENT effect size t=2.0 needs
+             ~90 trade-days (~4.5 months). Do NOT re-promise short timelines.
+             Base rate from this project: every edge found so far decayed
+             within 2-3 months, so treat sliding numbers as the likely case,
+             not as noise to wait out.
     paper4 = $50, --walk --realistic --slip-ticks 1. Max-size execution recon.
+             EXECUTION VALIDATED (Jul31, 21 trades): fills matched paper1's
+             prices EXACTLY at 5x size; 2 PARTIAL fills ($38.91, $22.78)
+             priced and P&L'd on notional actually spent; 2 fills at 0.50 when
+             the book moved (marketable limit absorbed it, cost ~$2 each);
+             zero cant_fill / unfilled / walk_too_deep in 209 windows. So $50
+             is MECHANICALLY fillable. P&L -$82 at 47.6% wr = the same fading
+             signal, 5x sized — NOT an execution failure.
     paper2 = RETIRED 2026-07-27 (v2 qimb gate: 48.7% wr, -$5, it selected the
              losers — a history-fitted filter inverting live, same failure mode
              as the Appendix 11 calibration gate). Log kept as evidence.
