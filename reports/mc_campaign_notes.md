@@ -744,3 +744,32 @@ LIVE-PATH BLOCKERS (confirmed in source, all in code I wrote):
 ACTION TAKEN: --live is now HARD-LOCKED in nix2_live.py with the blocker list
 inline. Paper mode is untouched. Unlocking requires fixing the blockers AND
 the forward test actually passing its bar (it is not: t 1.37->1.12->0.92).
+
+## WHY 5m AND NOT 15m (2026-08-02) — same rule, both families, identical gates
+
+  family    n   days   win rate   EV/trade      t
+  5m      809     90      53.9%     +0.989   +2.45
+  15m     408    169      51.2%     +0.664   +0.48
+
+15m is DIRECTIONALLY the same (positive, same sign) but far weaker and not
+significant, and it fires ~2.4 trades/day vs 5m's 9.0. Looser gates make 15m
+worse, not better (|z|>=0.02: 48.3% wr, t=-0.98).
+
+MECHANISM (this is why, and it is not a fitting artifact): the edge is a
+~1-second head start on a lagging oracle. z = g / (sigma * sqrt(duration)),
+so a 15m window carries sqrt(3)=1.73x more total uncertainty than a 5m one —
+the SAME one-second peek is a proportionally smaller fraction of what the
+window can still do. Measured: 15m passes the z-gate 6.5% of the time vs 5m's
+11.1%, and offers 86 windows/day vs 287.
+=> shorter window = bigger edge. 5m is the SHORTEST family Polymarket offers
+(5m/15m/1h/4h), so we are already at the optimum; 1h and 4h are predicted
+worse still by the same sqrt(duration) argument.
+COHERENCE CHECK PASSED: the effect shrinks in the direction and roughly the
+magnitude the mechanism predicts, which is mild independent support that the
+5m result is a real effect rather than a fitted one.
+
+COINS: tested on 5m across eth/sol/xrp/bnb/doge, 95 days (results/coincs/) —
+none carry it (eth/sol/xrp flat, bnb noisy small-n, doge significantly
+negative), and no re-tuning survived train/val. Coins on 15m are UNTESTED and
+low prior: it is the intersection of two conditions that each already failed
+(coin 5m dead, BTC 15m insignificant). Would need a fresh multi-hour download.
