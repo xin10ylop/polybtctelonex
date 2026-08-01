@@ -698,3 +698,49 @@ VERDICT STANCE: paper1 reaches its 20-trade-day evaluation point imminently
 and will NOT clear the pre-registered bar (needs t>=2.0, has 0.92) -> NOT
 CONFIRMED. That is not "proven dead", it is "do not fund". Cost of continuing
 is zero, so keep observing, but as a months-long watch, not a countdown.
+
+## LIVE-PATH AUDIT (2026-08-02) — independent Fable-5 audit, findings CONFIRMED
+
+An independent adversarial audit of the live order path, plus my own Telonex
+verification. All five blockers below were re-verified directly in source.
+
+TELONEX VERIFICATION (my pass) — the paper record is HONEST:
+  - settlement: 18/18 of paper1's recent win/loss calls match Telonex
+    result_id (settle.py uses gamma outcomePrices — an independent source).
+  - prices: downloaded the real book_snapshot_25 for 7 traded windows;
+    the ask the bot recorded matched Telonex EXACTLY 7/7.
+  - depth at those touches $13-$378, which explains paper4's partial fills.
+  - feed fidelity: Coinbase-live z-gate pass 14.4% (30/209) vs Binance-hist
+    11.1%; z=+1.52, p=0.13 -> CONSISTENT. (An earlier "MISMATCH" print of
+    mine used an arbitrary threshold and was wrong.)
+  - unexplained: paper1 trades 5.0/day vs 6.7/day expected after the depth
+    filter (25% short). Regime or restarts; not resolved.
+
+LIVE-PATH BLOCKERS (confirmed in source, all in code I wrote):
+  1 AUTH: pm.py post_order requires L2 creds (SDK assert_level_2_auth);
+    nix2_live treats PM_API_* as optional and never derives them.
+  2 WALLET: ClobClient built with no signature_type/funder -> EOA signing;
+    funded accounts normally hold USDC in a proxy wallet -> rejects.
+  3 RECORDS: `rec["fill"] = execu.buy(...)` is unguarded (nix2_live.py:140)
+    and buy() returns the INTENDED price/shares without inspecting resp;
+    the loop's blanket except means killed orders leave no record at all.
+  4 ORDER TYPE: live posts OrderType.FOK (all-or-nothing) while the
+    --realistic sim models PARTIAL fills. paper4's observed partials are
+    IMPOSSIBLE live; the FOK limit is also the walk AVERAGE, which can round
+    below the level the walk consumed. => paper4's "$50 is mechanically
+    fillable" does NOT hold for the live code as written. Fix: OrderType.FAK
+    with limit = observed ask + slip_ticks.
+  5 RISK: bot/live/risk.py has ZERO references in nix2_live.py. A real-money
+    run would have no drawdown/decay/streak halt and no bankroll sizing.
+  Also SERIOUS: no redemption of winning CTF tokens (EOA mode -> bankroll
+  drains while "winning"); no crash/position reconciliation; ~250-700ms of
+  unmodelled order latency (per-token SDK caches are always cold on a new
+  5m market) which pushes the real fill to ~B+0..B+500ms vs paper's B-250ms
+  — the author's own latency curve prices that at -$0.20..-$0.40/trade.
+  CLEAN (verified, no action): fee model exact (0.07, matches 4,661 on-chain
+  fills 2026-07-31), min size 5 / tick 0.01 agree across gamma+CLOB, token
+  ordering correct.
+
+ACTION TAKEN: --live is now HARD-LOCKED in nix2_live.py with the blocker list
+inline. Paper mode is untouched. Unlocking requires fixing the blockers AND
+the forward test actually passing its bar (it is not: t 1.37->1.12->0.92).

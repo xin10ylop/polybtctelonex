@@ -164,6 +164,37 @@ async def main() -> None:
     args = ap.parse_args()
 
     if args.live:
+        # ------------------------------------------------------------------
+        # LIVE IS LOCKED. An independent audit (2026-08-02) found the live
+        # path has never been exercised end-to-end and cannot work as written.
+        # Unlocking requires fixing these and re-auditing — not just deleting
+        # this guard. See reports/mc_campaign_notes.md "LIVE-PATH AUDIT".
+        #   1 AUTH: post_order needs L2 API creds; they are treated as
+        #     optional and never derived -> every order raises.
+        #   2 WALLET: ClobClient built with no signature_type/funder -> EOA
+        #     signing, but funded accounts normally hold USDC in a proxy
+        #     wallet; orders rejected for balance/allowance.
+        #   3 RECORDS: execu.buy() is unguarded and never inspects the
+        #     response; the loop's blanket except swallows failures, so
+        #     killed orders vanish and unfilled ones are scored as fills.
+        #   4 ORDER TYPE: live posts FOK (all-or-nothing) while the paper sim
+        #     models PARTIAL fills -> paper4's partials are impossible live,
+        #     and the FOK limit is the walk average (can round below the
+        #     level the walk consumed, killing otherwise-fillable orders).
+        #   5 RISK: bot/live/risk.py is NOT wired into this file at all;
+        #     a real-money run would have no drawdown/decay/streak halts and
+        #     no bankroll-based sizing.
+        #   + no redemption of winning CTF tokens (bankroll drains in EOA
+        #     mode), no crash reconciliation, ~250-700ms of unmodelled order
+        #     latency that pushes the fill past the boundary.
+        # AND: the pre-registered forward test is NOT passing (t 1.37 -> 1.12
+        # -> 0.92 against a 2.0 bar), so there is nothing to deploy yet.
+        # ------------------------------------------------------------------
+        raise SystemExit(
+            "--live is LOCKED. The live order path is unaudited and known "
+            "broken (auth, wallet mode, order type, record-keeping, no risk "
+            "controls) and the forward test has not passed its bar. "
+            "See the comment above this guard in bot/live/nix2_live.py.")
         pk = os.environ.get("PM_PRIVATE_KEY")
         if not pk:
             raise SystemExit("--live requires PM_PRIVATE_KEY in env (never logged)")
