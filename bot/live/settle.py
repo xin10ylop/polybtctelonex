@@ -65,6 +65,13 @@ def main() -> None:
     by_day: dict[str, list[float]] = {}
     tot = n = wins = 0.0
     pending = 0
+    # FOK shadow-book: the live executor posts fill-or-kill, so a partial fill
+    # is IMPOSSIBLE live — it would be a zero fill. Paper models partials, so
+    # every PARTIAL trade in this record is one live would never have made.
+    # Tracked in parallel (no behaviour change) so the account can be scored
+    # both as-simulated and as-live-would-have-executed.
+    fok_day: dict[str, list[float]] = {}
+    fok_tot = fok_n = fok_wins = 0.0
     for t in trades:
         uw = up_won(t["slug"])
         if uw is None:
@@ -79,6 +86,9 @@ def main() -> None:
         pnl = sh * res - stake - fee
         by_day.setdefault(t["ts"][:10], []).append(pnl)
         tot += pnl; n += 1; wins += side_won
+        if not t.get("partial"):
+            fok_day.setdefault(t["ts"][:10], []).append(pnl)
+            fok_tot += pnl; fok_n += 1; fok_wins += side_won
         if args.verbose:
             part = " PARTIAL" if t.get("partial") else ""
             print(f"  {t['ts'][:19]} {t['side']:<4} @{px} ${stake:>5.2f}{part} -> "
@@ -105,6 +115,21 @@ def main() -> None:
     print(f"  actual ${per_day:+.2f}/trading-day ({n/len(by_day):.1f} trades/day)")
     print(f"  day-clustered mean ${mean:+.3f}/trade, t={tstat:+.2f}  "
           f"(per-trade t={t_trade:+.2f})")
+    # --- what LIVE would actually have done (FOK: no partial fills exist) ---
+    dropped = int(n - fok_n)
+    if dropped:
+        f_daily = [sum(v) / len(v) for v in fok_day.values()]
+        f_mean = sum(f_daily) / len(f_daily)
+        f_sd = (math.sqrt(sum((d - f_mean) ** 2 for d in f_daily)
+                          / (len(f_daily) - 1)) if len(f_daily) > 1 else 0.0)
+        f_t = f_mean / (f_sd / math.sqrt(len(f_daily))) if f_sd > 0 else float("nan")
+        print(f"  FOK-corrected (live posts fill-or-kill, so the "
+              f"{dropped} PARTIAL fill(s) would have been NO fill):")
+        print(f"    {int(fok_n)} trades over {len(fok_day)} days, "
+              f"win rate {fok_wins/fok_n:.1%}, total ${fok_tot:+.2f}, "
+              f"EV ${fok_tot/fok_n:+.3f}/trade, t={f_t:+.2f}")
+        print(f"    -> {100*dropped/n:.0f}% of this account's trades are not "
+              f"reproducible live as the executor is written")
     # --- risk engine replay: what would the live risk layer be doing? ---
     try:
         import os as _os, sys as _sys
