@@ -773,3 +773,37 @@ none carry it (eth/sol/xrp flat, bnb noisy small-n, doge significantly
 negative), and no re-tuning survived train/val. Coins on 15m are UNTESTED and
 low prior: it is the intersection of two conditions that each already failed
 (coin 5m dead, BTC 15m insignificant). Would need a fresh multi-hour download.
+
+## LIVE FEED SPARSITY vs RESEARCH FEED (2026-08-02)
+
+The live fleet runs `--venue coinbase`; the frozen rule's evidence was built on
+Binance 1s klines. Measured the signal's zero-rate on both:
+
+    research (Binance 1s klines, 90 days, n=25,820):  g == 0 in 48%
+    live     (Coinbase ticker, 300 windows):          z == 0 in 59%
+                                                      difference: +11 pp
+
+Reading:
+  * ~48% is INHERENT, not a defect. BTC's 1-second return is exactly zero
+    about half the time even on a dense tick feed — that is what a 1s
+    lookback looks like, and the rule was built on top of it.
+  * The +11 pp gap IS real (SE 2.8pp at n=300, so z ~ 3.9). On Coinbase a
+    zero can mean "genuinely flat" OR "no trade arrived, so both price_at()
+    lookups returned the same stale tick". The second case is information
+    loss and costs ~11% of windows.
+  * Net: live sees ~41% usable windows vs ~52% in research, i.e. ~21% fewer
+    opportunities than the research feed implies.
+
+DECISION: do NOT switch venue now. paper1-4 are pre-registered forward tests
+and changing the signal's input feed mid-flight voids them (Rule 2).
+
+Two reasons this is not urgent:
+  * The published timeline ("~33 more trade-days to t>=2.0") derives from
+    paper1's OBSERVED live rate of 5.0 trades/day, which already carries this
+    handicap. No recalculation needed.
+  * The sign of the effect on edge QUALITY is unknown — the windows Coinbase
+    drops may be the least informative ones. No evidence either way.
+
+Revisit only after paper1 reaches its verdict. If it passes, aligning the
+deployment venue to the research feed (--venue binanceus) is a candidate for
+its own pre-registered test, never a silent switch.
