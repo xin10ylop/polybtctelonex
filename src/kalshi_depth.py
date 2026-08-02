@@ -57,7 +57,7 @@ def main() -> None:
     px: dict[int, float] = {}
     for f in sorted(glob.glob(f"{kld}/*.parquet")):
         day = f.split("/")[-1][:-8]
-        if not ("2026-05" <= day <= "2026-06"):
+        if not ("2026-05" <= day[:7] <= "2026-07"):
             continue
         k = pl.read_parquet(f, columns=["open_time_us", "close"])
         px.update(zip((k["open_time_us"] // 1_000_000).to_list(),
@@ -81,11 +81,16 @@ def main() -> None:
         except Exception:
             return None
 
-    # Two passes per file: the ladder columns are nested lists and blow memory
-    # if the whole month is materialised (a single concat OOM'd at 15.9GB), so
-    # pass 1 reads only the cheap columns to pick the exact rows we need.
+    # Two passes per file. The July month is 3.65M rows in 14 row groups, and
+    # the bids/asks columns are nested struct lists — materialising a whole
+    # month (or even a whole row group) blows past memory (OOM-killed at
+    # ~16GB). Pass 1 reads only the two cheap columns to pick exact rows;
+    # pass 2 streams the ladders in real batches via pyarrow.
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+
     parts = []
-    for f in sorted(glob.glob(f"data/kalshi/{coin}_15m_books_2026-0[56].parquet")):
+    for f in sorted(glob.glob(f"data/kalshi/{coin}_15m_books_2026-0[567].parquet")):
         lite = pl.read_parquet(f, columns=["market_id", "timestamp_us"])
         lite = lite.with_columns((pl.col("timestamp_us") // 1_000_000).alias("ts"))
         tmap = {m: open_ts(m) for m in lite["market_id"].unique().to_list()}
@@ -97,16 +102,41 @@ def main() -> None:
             continue
         keep = lite.sort("ts").group_by("market_id").last()
         want = set(zip(keep["market_id"].to_list(), keep["timestamp_us"].to_list()))
-        full = pl.read_parquet(f)
-        full = full.filter(
-            pl.struct(["market_id", "timestamp_us"]).map_elements(
-                lambda r: (r["market_id"], r["timestamp_us"]) in want,
-                return_dtype=pl.Boolean))
+        want_ts = set(keep["timestamp_us"].to_list())
+        del lite
+
+        # Filter INSIDE arrow, row group by row group, and only convert the
+        # handful of surviving rows to polars. Converting a whole row group of
+        # nested ladders (260k rows in July) is what blew memory.
+        import pyarrow.compute as pc
+        got = []
+        pf = pq.ParquetFile(f)
+        want_arr = pa.array(sorted(want_ts))
+        for i in range(pf.metadata.num_row_groups):
+            tb = pf.read_row_group(i, columns=["market_id", "timestamp_us"])
+            mask = pc.is_in(tb.column("timestamp_us"), value_set=want_arr)
+            if not pc.any(mask).as_py():
+                continue
+            idx = pc.indices_nonzero(mask)
+            tb2 = pf.read_row_group(i, columns=["market_id", "timestamp_us",
+                                                "bids", "asks"]).take(idx)
+            bb = pl.from_arrow(tb2)
+            bb = bb.filter(
+                pl.struct(["market_id", "timestamp_us"]).map_elements(
+                    lambda r: (r["market_id"], r["timestamp_us"]) in want,
+                    return_dtype=pl.Boolean))
+            if bb.height:
+                got.append(bb)
+            del tb, tb2, bb
+        if not got:
+            continue
+        full = pl.concat(got)
         full = full.with_columns((pl.col("timestamp_us") // 1_000_000).alias("ts"))
         full = full.with_columns(
             pl.col("market_id").replace_strict(tmap, default=None).alias("T"))
         parts.append(full.select("market_id", "ts", "T", "bids", "asks"))
-        del lite, keep, full
+        print(f"  {f.split('/')[-1]}: {full.height:,} target snapshots", flush=True)
+        del keep, full, got
     snap = pl.concat(parts) if parts else pl.DataFrame()
     bk = snap
     print(f"{coin}: {bk.height:,} book snapshots -> {snap.height:,} windows "
@@ -166,14 +196,24 @@ def main() -> None:
               f"day-t={dtt:+5.2f}")
 
     print(f"  ({stale:,} windows dropped: no snapshot within 10s of T+840)\n")
+    # May+June were inspected while developing this; July was NEVER looked at
+    # with depth, so it is the clean holdout.
     for cl in CLIPS:
-        rr = [r for r in rows[cl] if r["lead"] >= 10]
-        ds = sorted(set(r["d"] for r in rr))
-        h = len(ds) // 2
-        TR, VA = set(ds[:h]), set(ds[h:])
-        print(f"  === clip {cl:,} contracts, |lead| >= 10bp ===")
-        rep("TRAIN", [r for r in rr if r["d"] in TR], cl)
-        rep("VAL", [r for r in rr if r["d"] in VA], cl)
+        for lo in (10, 20):
+            rr = [r for r in rows[cl] if r["lead"] >= lo]
+            print(f"  === clip {cl:,} contracts, |lead| >= {lo}bp ===")
+            rep("TRAIN May+Jun", [r for r in rr if r["d"] < "2026-07"], cl)
+            rep("HOLDOUT July", [r for r in rr if r["d"] >= "2026-07"], cl)
+
+    # coverage bias: are the windows the collector captured representative?
+    seen = {r["d"] + str(r["lead"]) for r in rows[CLIPS[0]]}
+    print(f"\n  coverage: {len(rows[CLIPS[0]]):,} windows had a usable book "
+          f"snapshot near T+840")
+    lead_all = [r["lead"] for r in rows[CLIPS[0]]]
+    if lead_all:
+        lead_all.sort()
+        print(f"  |lead| of covered windows: median {lead_all[len(lead_all)//2]:.1f}bp, "
+              f"share >=10bp {100*sum(1 for x in lead_all if x>=10)/len(lead_all):.0f}%")
 
 
 if __name__ == "__main__":
