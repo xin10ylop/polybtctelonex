@@ -38,6 +38,19 @@ FILL_OFF_US = -250_000   # fill 0.25s before open
 DUR_S = 300
 
 
+async def _io(fn, *a, timeout: float = 8.0):
+    """Run a blocking urllib call off the event loop under a HARD timeout.
+
+    pm.* use urllib, whose `timeout=` covers socket reads but NOT DNS
+    resolution — getaddrinfo can block forever. Called synchronously inside a
+    coroutine that also freezes the price feed, and systemd cannot see it
+    (the process stays alive and healthy), so Restart=always never fires.
+    On 2026-08-02 all four bots froze on the same second this way and sat
+    dead for 8h with Result=success/NRestarts=0.
+    """
+    return await asyncio.wait_for(asyncio.to_thread(fn, *a), timeout=timeout)
+
+
 def next_boundary_us(now_us: int) -> int:
     """Next 5-minute UTC boundary strictly after now."""
     step = 300_000_000
@@ -78,13 +91,13 @@ async def trade_window(feed: SpotFeed, execu: pm.Executor, stake: float,
     side = "up" if g > 0 else "down"
     rec.update({"g_bp": round(g, 3), "z": round(z, 4), "side": side})
     try:
-        mkt = pm.find_btc_5m_market(B)
+        mkt = await _io(pm.find_btc_5m_market, B)
     except Exception as e:
         return emit(f"discover_err:{e}")
     if not mkt:
         return emit("no_market")
     token = mkt["up_token"] if side == "up" else mkt["down_token"]
-    bs = pm.book_summary(token)
+    bs = await _io(pm.book_summary, token)
     ask = bs["ask"] if bs else None
     depth = bs["ask_usd"] if bs else 0.0
     q_imb = bs.get("q_imb") if bs else None
@@ -121,7 +134,7 @@ async def trade_window(feed: SpotFeed, execu: pm.Executor, stake: float,
         # against the book as it is THEN, as a marketable limit (observed ask
         # + slip tolerance). The book can have moved away -> partial or no
         # fill. Anything else silently assumes the liquidity waited for us.
-        bs2 = pm.book_summary(token)
+        bs2 = await _io(pm.book_summary, token)
         if not bs2 or not bs2.get("_asks"):
             return emit("fill_no_book")
         limit = round(ask + slip_ticks * mkt["tick"], 4)
@@ -213,8 +226,16 @@ async def main() -> None:
           f"account={args.account} mode={'LIVE' if args.live else 'PAPER'}")
     print("warming up feed (~5 min for the 300s vol window)...")
     last_B = 0
+    last_ok = time.time()
     while True:
         try:
+            # WATCHDOG: a hang that leaves the process alive is invisible to
+            # systemd. If three windows pass with no completed decision, exit
+            # non-zero and let Restart=always recover us.
+            if time.time() - last_ok > 3 * (DUR_S + 30):
+                raise SystemExit(
+                    f"watchdog: no completed window in "
+                    f"{int(time.time() - last_ok)}s — exiting for restart")
             now = int(time.time() * 1_000_000)
             B = next_boundary_us(now)
             if B == last_B:                       # already handled this window
@@ -224,6 +245,9 @@ async def main() -> None:
             await trade_window(feed, execu, args.stake, args.account, args.live,
                                B, args.qimb_max, args.walk,
                                args.realistic, args.slip_ticks)
+            last_ok = time.time()
+        except SystemExit:
+            raise
         except Exception as e:
             print(f"[loop] {e}")
             await asyncio.sleep(2.0)
