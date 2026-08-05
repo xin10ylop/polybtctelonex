@@ -1,68 +1,75 @@
 {
- "name": "cheap+signal (nix2)",
- "frozen": "2026-07-11",
- "one_line": "Buy the underpriced side when the oracle-lag signal confirms it and the book is fillable; skip toxic-cheap, spikes, and thin books.",
- "why_it_works": "EV = win-rate vs entry PRICE, not win-rate alone. The book sometimes underprices a side (crowd piled the other way); the Binance-vs-Chainlink oracle lag independently says that side just ticked up. Cheap + confirmation = a mispricing, not information. Profit is price leverage (win ~52% at ~0.47 = +6-9%/trade), not direction skill.",
- "family": "5m",
- "signal": {
-  "decision_time": "boundary - 0.5s",
-  "g_bp": "1e4 * ln( Binance(T0-150ms) / Binance(T0-150ms-1s) )",
-  "sigma": "1s-grid Binance vol over prior 300s * sqrt(300) * 1e4",
-  "z": "g_bp / sigma",
-  "side": "up if g>0 else down"
- },
- "entry_rules": {
-  "ask_min": 0.44,
-  "ask_max": 0.4999,
-  "abs_z_min": 0.05,
-  "abs_z_max": 0.4,
-  "min_touch_usd": 10.0,
-  "stake_usd": 10.0,
-  "fill": "taker at signal-side top-of-book at T0+250ms, walk book if thin",
-  "exit": "hold to resolution (no take-profit cap)"
- },
- "in_sample_evidence": {
-  "period": "5m 2026-02-12..05-12, 90 days",
-  "base_rule": "ask<0.50 & |z|>=0.05: n=987, wr 51.5%, +$0.61/tr, daily t=2.47 p=0.016",
-  "deployable_$10_skip_thin": "n=687, wr 53.0%, +$0.92/tr (+9.2%), daily t=2.98 p=0.004",
-  "stability": "win rate identical train(51.1)/val(51.1); positive every month; fresh Jul6-8 positive",
-  "caveats": "NOT pre-registered (found after 6 passes -> discount p); 5m recent era only; small capacity (~$10/trade, decays by $25); pooled with 15m not significant"
- },
- "PRE_REGISTERED_ONESHOT": {
-  "rule": "FROZEN above \u2014 do not change any parameter",
-  "validate_only_on": "5m days strictly after 2026-07-08 (genuinely unseen)",
-  "bar": "positive EV AND daily-EV t >= 2.0 over >= 20 trade-days",
-  "if_pass": "real edge confirmed -> paper-live then small real stakes",
-  "if_fail": "in-sample mirage -> report negative, do not retune"
- },
- "V2_PRE_REGISTERED": {
-  "frozen": "2026-07-13",
-  "rule": "v1 + require signal-side book q_imb < -0.05 at decision (book leans AWAY = mispricing fingerprint). All other parameters identical to v1.",
-  "evidence": "train Feb-Mar keep 53.6% vs dropped 50.8%; val Apr-May keep 59.0% vs dropped 54.8%; EV ~2x per trade at ~half the trade count. Only candidate of 4 consistent in BOTH halves. Rejected: spread filter (sign flip), z sub-band (no val lift), hour-of-day (sign flip), late-TP 0.90/0.95 exit (EV identical to hold, negligible variance gain).",
-  "deployment": "parallel paper account 'paper2' with --qimb-max -0.05; v1 test untouched",
-  "bar": "same as v1: total>0 AND daily-EV t>=2.0 over >=20 trade-days, judged independently"
- },
- "V3_PRE_REGISTERED": {
-  "frozen": "2026-07-28",
-  "rule": "v1 signal+gates, but fill by WALKING the ask ladder instead of skipping thin books; stake $25; refuse if the walk climbs past 0.55.",
-  "why": "Fill audit (src/nix_fillaudit.py): skip-if-thin drops windows as the stake grows (596/443/314 at $10/$25/$50), which is what created the false 'capacity caps at $10-15' conclusion. Walking keeps ~100% of windows at ~8.9% ROI: $25 -> $20.04/day vs $14.35 skip-thin; $50 -> $40.09 vs $21.03. At $10 the two tie, so v1 is NOT changed.",
-  "deployment": "parallel paper account 'paper3' with --walk --stake 25; paper1 (v1) and paper2 (v2) untouched",
-  "bar": "same as v1, judged independently: total>0 AND daily t>=2.0 over >=20 trade-days"
- },
- "RISK_ENGINE": {
-  "module": "bot/live/risk.py (calibrated by src/nix_riskcal.py, tests/test_nix2_risk.py 10/10)",
-  "sizing": "1% of bankroll per trade, floor $5, cap $50 \u2014 NOT Kelly (8-11% tolerates ruinous drawdowns). $10 stakes therefore need ~$1000 bankroll.",
-  "halts": "drawdown >= 35% of bankroll; 12 consecutive losses; rolling decay t <= -1.5 over >=250 trades (window 400)",
-  "pause": "daily loss >= 12 stakes, clears at UTC midnight",
-  "calibration": "decay detector false-halts a LIVE edge 3.7% per 800 trades (the naive t<-1.5/n>=60/window120 setting did so 38% of the time); catches a -$0.50/trade dead edge 78-94% of the time, median ~335-426 trades",
-  "status": "MONITOR ONLY during the paper test (settle.py replays it and reports state); ENFORCE when real money goes live"
- },
- "V4_REALISTIC_EXECUTION": {
-  "frozen": "2026-07-28",
-  "problem": "v1-v3 paper fills at the price OBSERVED at decision time (T0), which silently assumes the liquidity waited 250ms for our order. That is an optimistic simulation, not an execution test.",
-  "rule": "--realistic: at fill time RE-FETCH the book and fill against what is actually there, as a marketable LIMIT at (observed ask + 1 tick). Partial fills and no-fills are recorded honestly; P&L uses the notional ACTUALLY spent, not the intended stake.",
-  "deployment": "paper4: --stake 50 --walk --realistic --slip-ticks 1 (max size, $5000 bankroll at 1% sizing)",
-  "note": "Still cannot model OTHER bots racing us for the same liquidity \u2014 historical/live book shows what IS there, not how it reacts to us taking it repeatedly. Paper remains an UPPER BOUND at large size; only small real orders settle that.",
-  "bar": "same as v1, judged independently: total>0 AND daily t>=2.0 over >=20 trade-days"
- }
+  "name": "cheap+signal (nix2)",
+  "frozen": "2026-07-11",
+  "one_line": "Buy the underpriced side when the oracle-lag signal confirms it and the book is fillable; skip toxic-cheap, spikes, and thin books.",
+  "why_it_works": "EV = win-rate vs entry PRICE, not win-rate alone. The book sometimes underprices a side (crowd piled the other way); the Binance-vs-Chainlink oracle lag independently says that side just ticked up. Cheap + confirmation = a mispricing, not information. Profit is price leverage (win ~52% at ~0.47 = +6-9%/trade), not direction skill.",
+  "family": "5m",
+  "signal": {
+    "decision_time": "boundary - 0.5s",
+    "g_bp": "1e4 * ln( Binance(T0-150ms) / Binance(T0-150ms-1s) )",
+    "sigma": "1s-grid Binance vol over prior 300s * sqrt(300) * 1e4",
+    "z": "g_bp / sigma",
+    "side": "up if g>0 else down"
+  },
+  "entry_rules": {
+    "ask_min": 0.44,
+    "ask_max": 0.4999,
+    "abs_z_min": 0.05,
+    "abs_z_max": 0.4,
+    "min_touch_usd": 10.0,
+    "stake_usd": 10.0,
+    "fill": "taker at signal-side top-of-book at T0+250ms, walk book if thin",
+    "exit": "hold to resolution (no take-profit cap)"
+  },
+  "in_sample_evidence": {
+    "period": "5m 2026-02-12..05-12, 90 days",
+    "base_rule": "ask<0.50 & |z|>=0.05: n=987, wr 51.5%, +$0.61/tr, daily t=2.47 p=0.016",
+    "deployable_$10_skip_thin": "n=687, wr 53.0%, +$0.92/tr (+9.2%), daily t=2.98 p=0.004",
+    "stability": "win rate identical train(51.1)/val(51.1); positive every month; fresh Jul6-8 positive",
+    "caveats": "NOT pre-registered (found after 6 passes -> discount p); 5m recent era only; small capacity (~$10/trade, decays by $25); pooled with 15m not significant"
+  },
+  "PRE_REGISTERED_ONESHOT": {
+    "rule": "FROZEN above \u2014 do not change any parameter",
+    "validate_only_on": "5m days strictly after 2026-07-08 (genuinely unseen)",
+    "bar": "positive EV AND daily-EV t >= 2.0 over >= 20 trade-days",
+    "if_pass": "real edge confirmed -> paper-live then small real stakes",
+    "if_fail": "in-sample mirage -> report negative, do not retune"
+  },
+  "V2_PRE_REGISTERED": {
+    "frozen": "2026-07-13",
+    "rule": "v1 + require signal-side book q_imb < -0.05 at decision (book leans AWAY = mispricing fingerprint). All other parameters identical to v1.",
+    "evidence": "train Feb-Mar keep 53.6% vs dropped 50.8%; val Apr-May keep 59.0% vs dropped 54.8%; EV ~2x per trade at ~half the trade count. Only candidate of 4 consistent in BOTH halves. Rejected: spread filter (sign flip), z sub-band (no val lift), hour-of-day (sign flip), late-TP 0.90/0.95 exit (EV identical to hold, negligible variance gain).",
+    "deployment": "parallel paper account 'paper2' with --qimb-max -0.05; v1 test untouched",
+    "bar": "same as v1: total>0 AND daily-EV t>=2.0 over >=20 trade-days, judged independently"
+  },
+  "V3_PRE_REGISTERED": {
+    "frozen": "2026-07-28",
+    "rule": "v1 signal+gates, but fill by WALKING the ask ladder instead of skipping thin books; stake $25; refuse if the walk climbs past 0.55.",
+    "why": "Fill audit (src/nix_fillaudit.py): skip-if-thin drops windows as the stake grows (596/443/314 at $10/$25/$50), which is what created the false 'capacity caps at $10-15' conclusion. Walking keeps ~100% of windows at ~8.9% ROI: $25 -> $20.04/day vs $14.35 skip-thin; $50 -> $40.09 vs $21.03. At $10 the two tie, so v1 is NOT changed.",
+    "deployment": "parallel paper account 'paper3' with --walk --stake 25; paper1 (v1) and paper2 (v2) untouched",
+    "bar": "same as v1, judged independently: total>0 AND daily t>=2.0 over >=20 trade-days"
+  },
+  "RISK_ENGINE": {
+    "module": "bot/live/risk.py (calibrated by src/nix_riskcal.py, tests/test_nix2_risk.py 10/10)",
+    "sizing": "1% of bankroll per trade, floor $5, cap $50 \u2014 NOT Kelly (8-11% tolerates ruinous drawdowns). $10 stakes therefore need ~$1000 bankroll.",
+    "halts": "drawdown >= 35% of bankroll; 12 consecutive losses; rolling decay t <= -1.5 over >=250 trades (window 400)",
+    "pause": "daily loss >= 12 stakes, clears at UTC midnight",
+    "calibration": "decay detector false-halts a LIVE edge 3.7% per 800 trades (the naive t<-1.5/n>=60/window120 setting did so 38% of the time); catches a -$0.50/trade dead edge 78-94% of the time, median ~335-426 trades",
+    "status": "MONITOR ONLY during the paper test (settle.py replays it and reports state); ENFORCE when real money goes live"
+  },
+  "V4_REALISTIC_EXECUTION": {
+    "frozen": "2026-07-28",
+    "problem": "v1-v3 paper fills at the price OBSERVED at decision time (T0), which silently assumes the liquidity waited 250ms for our order. That is an optimistic simulation, not an execution test.",
+    "rule": "--realistic: at fill time RE-FETCH the book and fill against what is actually there, as a marketable LIMIT at (observed ask + 1 tick). Partial fills and no-fills are recorded honestly; P&L uses the notional ACTUALLY spent, not the intended stake.",
+    "deployment": "paper4: --stake 50 --walk --realistic --slip-ticks 1 (max size, $5000 bankroll at 1% sizing)",
+    "note": "Still cannot model OTHER bots racing us for the same liquidity \u2014 historical/live book shows what IS there, not how it reacts to us taking it repeatedly. Paper remains an UPPER BOUND at large size; only small real orders settle that.",
+    "bar": "same as v1, judged independently: total>0 AND daily t>=2.0 over >=20 trade-days"
+  },
+  "ACCOUNT_STATUS_2026_08_05": {
+    "paper1": "RUNNING. 122 trades / 25 trade-days / 50.8% / +$31.99 / day-t=+0.68. Peaked at 53.8% and +$94.41 on Aug 1, then a 14-trade run at 28.6% (P<=4 wins in 14 at a true 53.8% is 5.2%). An equivalent drawdown happened Jul 14-15 (11 trades, 18%, -$72) and recovered. No action.",
+    "paper2": "CLOSED 2026-08-05 (systemctl disable nix2-paper2). 48 trades / 18 trade-days / 52.1% / +$28.07 / day-t=+0.48. Closed because its pre-registered one-shot was already VOID (the bot died 2026-07-27 and lost 5 days) and it trades at 2.7/day vs paper1 4.9/day - NOT because the q_imb gate was proven worse. CORRECTION: an earlier note claimed it underperformed paper1 (51.1% vs 53.8%); that gap flipped within a day (paper2 52.1% vs paper1 50.8%), so n=47 never supported the claim. The gate is UNRESOLVED, not refuted. Log retained at logs/nix2_live_paper2.jsonl.",
+    "paper3": "RUNNING. 23 trades / 4 trade-days / 39.1% / -$131.04. Checked for a structural defect: WALK_MAX_PX=0.55 is above the ~0.53 break-even entry at a 53% win rate, so a walk climbing there would be -EV by construction. It does NOT: fills are mean 0.4878, median 0.4900, max 0.5000, 0/23 above 0.53. Entries match paper1 (0.4864), so its loss is paper1 bad run x2.5 stake, not independent failure. Needs >=20 trade-days; it has 4. No action.",
+    "paper4": "RUNNING, the lead candidate. 56 trades / 10 trade-days / 51.8% / +$155.65. FOK-corrected (what live would execute): 44 trades / 54.5% / +$174.92 / EV +$3.975 / t=+1.05. 21% of its trades are partial fills that fill-or-kill would refuse, and those remain the losing subset.",
+    "execution_check": "The 2026-08-02 systemd cutover + _io() threading was the prime suspect for the drop and is CLEARED: ask-at-decision vs ask-at-fill drift is median 0.0000 both before and after, and the skip-reason mix is unchanged. Two INPUTS did move and are worth watching because they are not outcomes: entry ask 0.4771 -> 0.4864 (costs ~23% of EV on its own) and median touch depth $66 -> $35."
+  }
 }
